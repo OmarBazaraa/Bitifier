@@ -8,11 +8,11 @@ using namespace std;
 
 #define BLACK_WHITE_THRESHOLD	180
 
-#define PATH_SAMPLE_DATA		"DataSet/"
-#define PATH_COMPRESSED_DATA	"Compressed/"
-#define PATH_UNCOMPRESSED_DATA	"Uncompressed/"
-#define EXT_SAMPLE_FILE			"jpg"
-#define EXT_COMPRESSED_FILE		"cpr"
+#define PATH_SAMPLE_DATA        "DataSet/"
+#define PATH_COMPRESSED_DATA    "Compressed/"
+#define PATH_UNCOMPRESSED_DATA  "Uncompressed/"
+#define EXT_SAMPLE_FILE         "jpg"
+#define EXT_COMPRESSED_FILE     "cpr"
 
 /**
  * Used to boost reading/writing from/to the console
@@ -40,7 +40,7 @@ int main() {
 		// Read files info
 		GetFilesInDirectory(files, PATH_SAMPLE_DATA);
 
-		for (int i = 0; i < 1; ++i) {
+		for (int i = 0; i < files.size(); ++i) {
 			// If file is not of type .jpg then skip it
 			if (files[i].second != EXT_SAMPLE_FILE) {
 				continue;
@@ -85,6 +85,6 @@ int main() {
 
 	// Output process time
 	int stopTime = clock();
-	cout << "Time: " << (stopTime - startTime) / double(CLOCKS_PER_SEC) * 1000.0 << "ms" << endl;
+	cout << "Time: " << (stopTime - startTime) / double(CLOCKS_PER_SEC) << "sec" << endl;
 	return 0;
 }
