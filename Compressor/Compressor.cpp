@@ -8,20 +8,20 @@ Compressor::~Compressor() {
 	imgMatrix.deallocate();
 }
 
-void Compressor::encode(const string& imagePath, const string& outputPath) {
+void Compressor::compress(const string& imagePath, const string& outputPath) {
 	cout << "Loading image..." << endl;
 	loadImage(imagePath);
 	cout << "Compressing..." << endl;
-	compress();
+	encodeData();
 	cout << "Saving compressed file..." << endl;
 	saveCompressedFile(outputPath);
 }
 
-void Compressor::decode(const string& compressedFilePath, const string& outputPath) {
+void Compressor::extract(const string& compressedFilePath, const string& outputPath) {
 	cout << "Loading compressed file..." << endl;
 	loadCompressedFile(compressedFilePath);
 	cout << "Decompressing..." << endl;
-	decompress();
+	decodeData();
 	cout << "Saving image..." << endl;
 	saveImage(outputPath);
 }
@@ -44,7 +44,7 @@ void Compressor::loadImage(const string& path) {
 	cv::cvtColor(rgbMat, imgMatrix, CV_BGR2GRAY);
 }
 
-void Compressor::compress() {
+void Compressor::encodeData() {
 	compressedBytes.clear();
 	compressedSizes.clear();
 
@@ -74,13 +74,13 @@ void Compressor::compress() {
 	compressedSizes.push_back(saveInBase256(cnt));
 
 	// Store compression meta-data
-	compressMetaData();
+	encodeMetaData();
 	/*for (int i = 0; i < compressedSizes.size(); ++i) {
 		compressedImage.push_back(compressedSizes[i]);
 	}*/
 }
 
-void Compressor::compressMetaData() {
+void Compressor::encodeMetaData() {
 	int cnt = 1;
 	int prv = compressedSizes.back();
 	for (int i = (int)compressedSizes.size() - 2; i >= 0; --i) {
@@ -131,7 +131,7 @@ void Compressor::loadCompressedFile(const string& path) {
 	fin.close();
 }
 
-void Compressor::decompress() {
+void Compressor::decodeData() {
 	// Retrieve image meta-data
 	compressedSizes.clear();
 	int bytesCnt = 0;

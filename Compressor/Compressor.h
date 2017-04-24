@@ -32,14 +32,14 @@ public:
 	~Compressor();
 
 	/**
-	 * Encode the given black & white image
+	 * Compress the given black & white jpg image
 	 */
-	void encode(const string& imagePath, const string& outputPath);
+	void compress(const string& imagePath, const string& outputPath);
 
 	/**
-	 * Decode the compressed file back to a black & white image
+	 * Extract the given compressed file to a black & white jpg image
 	 */
-	void decode(const string& compressedFilePath, const string& outputPath);
+	void extract(const string& compressedFilePath, const string& outputPath);
 
 private:
 	/**
@@ -48,14 +48,14 @@ private:
 	void loadImage(const string& path);
 
 	/**
-	 * Compress the loaded image and save it to compressedBytes vector
+	 * Encode the loaded image data and save it to compressedBytes vector
 	 */
-	void compress();
+	void encodeData();
 
 	/**
-	 * Compress meta-data needed in decompression process
+	 * Encode meta-data needed in decompression process
 	 */
-	void compressMetaData();
+	void encodeMetaData();
 
 	/**
 	 * Save the compress data to the given path
@@ -68,9 +68,9 @@ private:
 	void loadCompressedFile(const string& path);
 
 	/**
-	 * Decompress the loaded file into a binary image
+	 * Decode the loaded file data into a binary image
 	 */
-	void decompress();
+	void decodeData();
 
 	/**
 	 * Save the loaded image with the given url

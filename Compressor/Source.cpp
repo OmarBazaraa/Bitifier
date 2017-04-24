@@ -54,7 +54,7 @@ int main() {
 			cout << "Processing " << src << "..." << endl;
 
 			// Compressing
-			compressor.encode(src, cpr);
+			compressor.compress(src, cpr);
 
 			// Get image size before and after compression
 			int orgSize = compressor.rows * compressor.cols;
@@ -63,7 +63,7 @@ int main() {
 			compressedFilesSize += comSize;
 
 			// Decompressing
-			compressor.decode(cpr, dst);
+			compressor.extract(cpr, dst);
 
 			// Stop if invalid compression is detected
 			cout << "Comparing original and compressed images..." << endl;
