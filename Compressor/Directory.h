@@ -2,13 +2,12 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <stdio.h>
 using namespace std;
 
 /**
  * Returns a list of files (name, extension) in the given directory
  */
-void GetFilesInDirectory(vector<pair<string, string>>& files, const string& directory) {
+inline void GetFilesInDirectory(vector<pair<string, string>>& files, const string& directory) {
 	// Make sure to change the following command to the corresponding
 	// one on your operating system when using Linux or MAC
 	string s = "dir " + directory + "b > dirs.txt";

@@ -8,6 +8,10 @@ Compressor::~Compressor() {
 	imgMatrix.deallocate();
 }
 
+//
+// Compression functions
+//
+
 void Compressor::compress(const string& imagePath, const string& outputPath) {
 	cout << "Loading image..." << endl;
 	loadImage(imagePath);
@@ -15,15 +19,6 @@ void Compressor::compress(const string& imagePath, const string& outputPath) {
 	encodeData();
 	cout << "Saving compressed file..." << endl;
 	saveCompressedFile(outputPath);
-}
-
-void Compressor::extract(const string& compressedFilePath, const string& outputPath) {
-	cout << "Loading compressed file..." << endl;
-	loadCompressedFile(compressedFilePath);
-	cout << "Decompressing..." << endl;
-	decodeData();
-	cout << "Saving image..." << endl;
-	saveImage(outputPath);
 }
 
 void Compressor::loadImage(const string& path) {
@@ -49,10 +44,10 @@ void Compressor::encodeData() {
 	compressedSizes.clear();
 
 	// Store image rows count
-	compressedSizes.push_back(saveInBase256(rows));
+	compressedSizes.push_back(encodeToBase256(rows));
 
 	// Store image cols count
-	compressedSizes.push_back(saveInBase256(cols));
+	compressedSizes.push_back(encodeToBase256(cols));
 
 	// Store image pixels
 	int cnt = 0;
@@ -65,13 +60,13 @@ void Compressor::encodeData() {
 				++cnt;
 			}
 			else {
-				compressedSizes.push_back(saveInBase256(cnt));
+				compressedSizes.push_back(encodeToBase256(cnt));
 				cnt = 1;
 				prv = !prv;
 			}
 		}
 	}
-	compressedSizes.push_back(saveInBase256(cnt));
+	compressedSizes.push_back(encodeToBase256(cnt));
 
 	// Store compression meta-data
 	encodeMetaData();
@@ -98,6 +93,23 @@ void Compressor::encodeMetaData() {
 	compressedBytes.push_back(cnt);
 }
 
+int Compressor::encodeToBase256(int number) {
+	int cnt = 0;
+
+	if (number == 0) {
+		compressedBytes.push_back(number);
+		++cnt;
+	}
+
+	while (number > 0) {
+		compressedBytes.push_back(number);
+		number >>= 8;	// divide 256
+		++cnt;
+	}
+
+	return cnt;
+}
+
 void Compressor::saveCompressedFile(const string& path) {
 	ofstream fout(path, ofstream::binary);
 
@@ -109,6 +121,19 @@ void Compressor::saveCompressedFile(const string& path) {
 	fout.write((char*)compressedBytes.data(), compressedBytes.size());
 
 	fout.close();
+}
+
+//
+// Extraction functions
+//
+
+void Compressor::extract(const string& compressedFilePath, const string& outputPath) {
+	cout << "Loading compressed file..." << endl;
+	loadCompressedFile(compressedFilePath);
+	cout << "Extracting..." << endl;
+	decodeData();
+	cout << "Saving image..." << endl;
+	saveImage(outputPath);
 }
 
 void Compressor::loadCompressedFile(const string& path) {
@@ -158,16 +183,15 @@ void Compressor::decodeData() {
 	reverse(compressedSizes.begin(), compressedSizes.end());*/
 
 	if (n != bytesCnt) {
-		string errorMessage = "Could not extract the given file";
-		throw exception(errorMessage.c_str());
+		throw exception("Could not extract the given file");
 	}
 
 	// Retrieve image rows count
-	rows = loadFromBase256(dataIdx, compressedSizes[++sizeIdx]);
+	rows = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
 	dataIdx += compressedSizes[sizeIdx];
 
 	// Retrieve image cols count
-	cols = loadFromBase256(dataIdx, compressedSizes[++sizeIdx]);
+	cols = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
 	dataIdx += compressedSizes[sizeIdx];
 
 	// Retrieve image pixels
@@ -176,7 +200,7 @@ void Compressor::decodeData() {
 	int cnt;
 	bool color = true;
 	while (dataIdx < n) {
-		cnt = loadFromBase256(dataIdx, compressedSizes[++sizeIdx]);
+		cnt = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
 		dataIdx += compressedSizes[sizeIdx];
 
 		while (cnt--) {
@@ -192,35 +216,7 @@ void Compressor::decodeData() {
 	}
 }
 
-void Compressor::saveImage(const string& path) {
-	//Mat image(rows, cols, CV_8UC3);
-
-	/*int idx = -1;
-	for (int i = 0; i < rows; ++i)
-		for (int j = 0; j < cols; ++j)
-			image.at<Vec3b>(i, j) = (binaryImage[++idx] ? Vec3b(255, 255, 255) : Vec3b(0, 0, 0));*/
-
-	imwrite(path, imgMatrix);
-}
-
-int Compressor::saveInBase256(int number) {
-	int cnt = 0;
-
-	if (number == 0) {
-		compressedBytes.push_back(number);
-		++cnt;
-	}
-
-	while (number > 0) {
-		compressedBytes.push_back(number);
-		number >>= 8;	// divide 256
-		++cnt;
-	}
-
-	return cnt;
-}
-
-int Compressor::loadFromBase256(int idx, int size) {
+int Compressor::decodeFromBase256(int idx, int size) {
 	idx += size;
 	int num = 0;
 
@@ -230,4 +226,15 @@ int Compressor::loadFromBase256(int idx, int size) {
 	}
 
 	return num;
+}
+
+void Compressor::saveImage(const string& path) {
+	//Mat image(rows, cols, CV_8UC3);
+
+	/*int idx = -1;
+	for (int i = 0; i < rows; ++i)
+	for (int j = 0; j < cols; ++j)
+	image.at<Vec3b>(i, j) = (binaryImage[++idx] ? Vec3b(255, 255, 255) : Vec3b(0, 0, 0));*/
+
+	imwrite(path, imgMatrix);
 }

@@ -1,9 +1,8 @@
 #pragma once
-#include <iostream>
-#include <fstream>
+// STL libraries
 #include <string>
-#include <vector>
-#include <algorithm>
+
+// OpenCV libraries
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -13,7 +12,7 @@ using namespace std;
 /**
  * Loads binary image from the given path into a matrix of pixels
  */
-cv::Mat loadBinaryImage(const string& path, int threshold) {
+inline cv::Mat loadBinaryImage(const string& path, int threshold) {
 	// Load colored image from file
 	cv::Mat rgbMat = imread(path, CV_LOAD_IMAGE_COLOR);
 
@@ -33,8 +32,8 @@ cv::Mat loadBinaryImage(const string& path, int threshold) {
 	cv::Mat binaryMat(grayMat.size(), grayMat.type());
 
 	// Apply thresholding
-	cv::threshold(grayMat, binaryMat, threshold, 255, cv::THRESH_BINARY);
-
+	cv::threshold(grayMat, binaryMat, threshold, 1, cv::THRESH_BINARY);
+	
 	return binaryMat;
 }
 
@@ -42,7 +41,7 @@ cv::Mat loadBinaryImage(const string& path, int threshold) {
  * Compare the given two images and return true if they match,
  * false otherwise
  */
-bool compareImages(const string& image1, const string& image2, int threshold) {
+inline bool compareImages(const string& image1, const string& image2, int threshold) {
 	// Load images
 	Mat img1 = loadBinaryImage(image1, threshold);
 	Mat img2 = loadBinaryImage(image2, threshold);
@@ -60,7 +59,7 @@ bool compareImages(const string& image1, const string& image2, int threshold) {
 	// Compare every pixel
 	for (int i = 0; i < img1.rows; ++i)
 		for (int j = 0; j < img1.cols; ++j)
-			if (img1.at<uchar>(i, j) != img1.at<uchar>(i, j))
+			if (img1.at<bool>(i, j) != img1.at<bool>(i, j))
 				return false;
 
 	return true;

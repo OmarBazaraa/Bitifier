@@ -1,3 +1,4 @@
+.gitignore
 page (1).jpg
 page (10).jpg
 page (11).jpg

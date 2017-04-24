@@ -1,12 +1,17 @@
 #pragma once
+// STL libraries
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
 #include <algorithm>
+
+// OpenCV libraries
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+
+// Custom libraries
+//#include "Utility.h"
 using namespace cv;
 using namespace std;
 
@@ -58,6 +63,13 @@ private:
 	void encodeMetaData();
 
 	/**
+	 * Convert the given integer to base 256 and stack them on
+	 * compressedBytes vector.
+	 * Return the number of digits of the given number in base 256
+	 */
+	int encodeToBase256(int number);
+
+	/**
 	 * Save the compress data to the given path
 	 */
 	void saveCompressedFile(const string& path);
@@ -73,22 +85,14 @@ private:
 	void decodeData();
 
 	/**
-	 * Save the loaded image with the given url
-	 */
-	void saveImage(const string& path);
-
-private:
-	/**
-	 * Convert the given integer to base 256 and stack them on
-	 * compressedBytes vector.
-	 * Return the number of digits of the given number in base 256
-	 */
-	int saveInBase256(int number);
-
-	/**
 	 * Convert the given size of bytes from compressedBytes vector starting from idx
 	 * from base 256 to decimal.
 	 * Return the converted integer
 	 */
-	int loadFromBase256(int idx, int size);
+	int decodeFromBase256(int idx, int size);
+
+	/**
+	 * Save the loaded image with the given url
+	 */
+	void saveImage(const string& path);	
 };
