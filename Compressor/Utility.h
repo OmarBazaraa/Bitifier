@@ -9,10 +9,12 @@
 using namespace cv;
 using namespace std;
 
+#define BLACK_WHITE_THRESHOLD	180
+
 /**
  * Loads binary image from the given path into a matrix of pixels
  */
-inline cv::Mat loadBinaryImage(const string& path, int threshold) {
+inline cv::Mat loadBinaryImage(const string& path) {
 	// Load colored image from file
 	cv::Mat rgbMat = imread(path, CV_LOAD_IMAGE_COLOR);
 
@@ -32,20 +34,55 @@ inline cv::Mat loadBinaryImage(const string& path, int threshold) {
 	cv::Mat binaryMat(grayMat.size(), grayMat.type());
 
 	// Apply thresholding
-	cv::threshold(grayMat, binaryMat, threshold, 1, cv::THRESH_BINARY);
+	cv::threshold(grayMat, binaryMat, BLACK_WHITE_THRESHOLD, 1, cv::THRESH_BINARY);
 	
 	return binaryMat;
+}
+
+/**
+ * Save the given vector of bytes to the given directory
+ */
+inline void saveFile(const string& path, const vector<uchar>& outBytes) {
+	ofstream fout(path, ofstream::binary);
+
+	if (!fout.is_open()) {
+		string errorMessage = "Could not load the file at: " + path;
+		throw exception(errorMessage.c_str());
+	}
+
+	fout.write((char*)outBytes.data(), outBytes.size());
+
+	fout.close();
+}
+
+/**
+ * Load the data from the given directory into the given vector of bytes
+ */
+inline void loadFile(const string& path, vector<uchar>& inBytes) {
+	ifstream fin(path, ifstream::binary);
+
+	if (!fin.is_open()) {
+		string errorMessage = "Could not load the file at: " + path;
+		throw exception(errorMessage.c_str());
+	}
+
+	// Get file size
+	fin.seekg(0, fin.end);
+	int fileSize = fin.tellg();
+	fin.seekg(0, fin.beg);
+
+	// Read all data
+	inBytes.resize(fileSize);
+	fin.read((char*)inBytes.data(), fileSize);
+
+	fin.close();
 }
 
 /**
  * Compare the given two images and return true if they match,
  * false otherwise
  */
-inline bool compareImages(const string& image1, const string& image2, int threshold) {
-	// Load images
-	Mat img1 = loadBinaryImage(image1, threshold);
-	Mat img2 = loadBinaryImage(image2, threshold);
-
+inline bool compareImages(const cv::Mat& img1, const cv::Mat& img2) {
 	// treat two empty mat as identical
 	if (img1.empty() && img2.empty()) {
 		return true;

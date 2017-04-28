@@ -11,25 +11,20 @@
 #include <opencv2/highgui/highgui.hpp>
 
 // Custom libraries
-//#include "Utility.h"
 using namespace cv;
 using namespace std;
 
 class Compressor
 {
-public:
-	int rows;
-	int cols;
-	int threshold;
+private:
 	vector<int> compressedSizes;
 	vector<unsigned char> compressedBytes;
-	cv::Mat imgMatrix;
 
 public:
 	/**
 	 * Constructor
 	 */
-	Compressor(int threshold);
+	Compressor();
 
 	/**
 	 * Destructor
@@ -39,24 +34,14 @@ public:
 	/**
 	 * Compress the given black & white jpg image
 	 */
-	void compress(const string& imagePath, const string& outputPath);
+	void compress(const cv::Mat& imageMat, vector<uchar>& outputBytes);
 
 	/**
 	 * Extract the given compressed file to a black & white jpg image
 	 */
-	void extract(const string& compressedFilePath, const string& outputPath);
+	void extract(vector<uchar>& compressedBytes, cv::Mat& outputImage);
 
 private:
-	/**
-	 * Loads grayscaled image from the given path into a matrix
-	 */
-	void loadImage(const string& path);
-
-	/**
-	 * Encode the loaded image data and save it to compressedBytes vector
-	 */
-	void encodeData();
-
 	/**
 	 * Encode meta-data needed in decompression process
 	 */
@@ -70,19 +55,9 @@ private:
 	int encodeToBase256(int number);
 
 	/**
-	 * Save the compress data to the given path
+	 * Decode image compressed meta-data needed in decompression process
 	 */
-	void saveCompressedFile(const string& path);
-
-	/**
-	 * Load the compress data from the given path
-	 */
-	void loadCompressedFile(const string& path);
-
-	/**
-	 * Decode the loaded file data into a binary image
-	 */
-	void decodeData();
+	void decodeMetaData();
 
 	/**
 	 * Convert the given size of bytes from compressedBytes vector starting from idx
@@ -90,9 +65,4 @@ private:
 	 * Return the converted integer
 	 */
 	int decodeFromBase256(int idx, int size);
-
-	/**
-	 * Save the loaded image with the given url
-	 */
-	void saveImage(const string& path);	
 };

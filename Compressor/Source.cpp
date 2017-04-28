@@ -6,8 +6,6 @@
 #include "Compressor.h"
 using namespace std;
 
-#define BLACK_WHITE_THRESHOLD	180
-
 #define PATH_SAMPLE_DATA        "DataSet/"
 #define PATH_COMPRESSED_DATA    "Compressed/"
 #define PATH_UNCOMPRESSED_DATA  "Uncompressed/"
@@ -31,14 +29,13 @@ int main() {
 	int startTime = clock();
 	int originalFilesSize = 0;
 	int compressedFilesSize = 0;
-	Compressor compressor(BLACK_WHITE_THRESHOLD);
 	vector<pair<string, string>> files;
 
 	cout << fixed << setprecision(3);
 	
 	try {
 		// Read files info
-		GetFilesInDirectory(files, PATH_SAMPLE_DATA);
+		getFilesInDirectory(PATH_SAMPLE_DATA, files);
 
 		for (int i = 0; i < files.size(); ++i) {
 			// If file is not of type .jpg then skip it
@@ -51,23 +48,42 @@ int main() {
 			string cpr = PATH_COMPRESSED_DATA + files[i].first + "." + EXT_COMPRESSED_FILE;
 			string dst = PATH_UNCOMPRESSED_DATA + files[i].first + "." + EXT_SAMPLE_FILE;
 
-			cout << "Processing " << src << "..." << endl;
+			// Compression variables
+			Compressor compressor;
+			cv::Mat originalImg, uncompressedImg;
+			vector<uchar> compressedBytes;
+
+			// Loading image
+			cout << "Loading " << src << "..." << endl;
+			originalImg = loadBinaryImage(src);
+			int orgSize = originalImg.rows * originalImg.cols;
+			originalFilesSize += orgSize;
 
 			// Compressing
-			compressor.compress(src, cpr);
-
-			// Get image size before and after compression
-			int orgSize = compressor.rows * compressor.cols;
-			int comSize = compressor.compressedBytes.size();
-			originalFilesSize += orgSize;
+			cout << "Compressing..." << endl;
+			compressor.compress(originalImg, compressedBytes);
+			int comSize = compressedBytes.size();
 			compressedFilesSize += comSize;
 
-			// Decompressing
-			compressor.extract(cpr, dst);
+			// Saving compressed image
+			cout << "Saving compressed file..." << endl;
+			saveFile(cpr, compressedBytes);
+			
+			// Loading file
+			cout << "Loading compressed file..." << endl;
+			loadFile(cpr, compressedBytes);
+
+			// Extracting
+			cout << "Extracting..." << endl;
+			compressor.extract(compressedBytes, uncompressedImg);
+
+			// Saving extracted image
+			cout << "Saving image..." << endl;
+			imwrite(dst, uncompressedImg);
 
 			// Stop if invalid compression is detected
 			cout << "Comparing original and compressed images..." << endl;
-			if (!compareImages(src, dst, BLACK_WHITE_THRESHOLD)) {
+			if (!compareImages(originalImg, uncompressedImg)) {
 				cout << "Lossy compression!" << endl;
 				return 0;
 			}

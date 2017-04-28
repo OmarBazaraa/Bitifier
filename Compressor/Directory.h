@@ -7,7 +7,7 @@ using namespace std;
 /**
  * Returns a list of files (name, extension) in the given directory
  */
-inline void GetFilesInDirectory(vector<pair<string, string>>& files, const string& directory) {
+inline void getFilesInDirectory(const string& directory, vector<pair<string, string>>& files) {
 	// Make sure to change the following command to the corresponding
 	// one on your operating system when using Linux or MAC
 	string s = "dir " + directory + "b > dirs.txt";
