@@ -34,7 +34,7 @@ inline cv::Mat loadBinaryImage(const string& path) {
 	cv::Mat binaryMat(grayMat.size(), grayMat.type());
 
 	// Apply thresholding
-	cv::threshold(grayMat, binaryMat, BLACK_WHITE_THRESHOLD, 1, cv::THRESH_BINARY);
+	cv::threshold(grayMat, binaryMat, BLACK_WHITE_THRESHOLD, 255, cv::THRESH_BINARY);
 	
 	return binaryMat;
 }
@@ -84,19 +84,17 @@ inline void loadFile(const string& path, vector<uchar>& inBytes) {
  */
 inline bool compareImages(const cv::Mat& img1, const cv::Mat& img2) {
 	// treat two empty mat as identical
-	if (img1.empty() && img2.empty()) {
+	if (img1.empty() && img2.empty())
 		return true;
-	}
 
 	// if dimensions of two mat is not identical, these two mat is not identical
-	if (img1.cols != img2.cols || img1.rows != img2.rows || img1.dims != img2.dims) {
+	if (img1.cols != img2.cols || img1.rows != img2.rows || img1.dims != img2.dims)
 		return false;
-	}
 
 	// Compare every pixel
 	for (int i = 0; i < img1.rows; ++i)
 		for (int j = 0; j < img1.cols; ++j)
-			if (img1.at<bool>(i, j) != img1.at<bool>(i, j))
+			if (img1.at<bool>(i, j) != img2.at<bool>(i, j))
 				return false;
 
 	return true;

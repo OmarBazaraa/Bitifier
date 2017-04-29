@@ -17,20 +17,20 @@ using namespace std;
 class Compressor
 {
 private:
+	cv::Mat imageMat;
+	vector<cv::Mat> shapes;
+	vector<pair<pair<int, int>, int>> imageBlocks;
 	vector<int> compressedSizes;
 	vector<unsigned char> compressedBytes;
 
+private:
+	// DFS variables
+	cv::Mat vis;
+	int dirR[8] = { -1, -1, 0, 1, 1, 1, 0, -1 };
+	int dirC[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+	int minRow, minCol, maxRow, maxCol;
+
 public:
-	/**
-	 * Constructor
-	 */
-	Compressor();
-
-	/**
-	 * Destructor
-	 */
-	~Compressor();
-
 	/**
 	 * Compress the given black & white jpg image
 	 */
@@ -42,6 +42,14 @@ public:
 	void extract(vector<uchar>& compressedBytes, cv::Mat& outputImage);
 
 private:
+
+	void encodeAdvanced();
+	int getShapeIdx(const cv::Mat& shape);
+	void dfs(int row, int col);
+	bool valid(int row, int col);
+
+	void encodeRunLength(const cv::Mat& img);
+
 	/**
 	 * Encode meta-data needed in decompression process
 	 */
@@ -53,6 +61,12 @@ private:
 	 * Return the number of digits of the given number in base 256
 	 */
 	int encodeToBase256(int number);
+
+	// ==============================================================================
+
+	void decodeAdvanced();
+
+	void decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx);
 
 	/**
 	 * Decode image compressed meta-data needed in decompression process
