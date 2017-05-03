@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <queue>
 
 // OpenCV libraries
 #include <opencv2/core/core.hpp>
@@ -19,7 +20,7 @@ class Compressor
 private:
 	cv::Mat imageMat;
 	vector<cv::Mat> shapes;
-	vector<pair<pair<int, int>, int>> imageBlocks;
+	vector<pair<int, int>> imageBlocks;
 	vector<int> compressedSizes;
 	vector<unsigned char> compressedBytes;
 

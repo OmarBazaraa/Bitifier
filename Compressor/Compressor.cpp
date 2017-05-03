@@ -28,6 +28,8 @@ void Compressor::encodeAdvanced() {
 	// Clear visited matrix
 	vis = cv::Mat::zeros(imageMat.rows, imageMat.cols, CV_8U);
 
+	int prvIdx = 0;
+
 	// Scan common shapes
 	for (int i = 0; i < imageMat.rows; ++i) {
 		for (int j = 0; j < imageMat.cols; ++j) {
@@ -42,7 +44,10 @@ void Compressor::encodeAdvanced() {
 			cv::Mat shape(imageMat, Range(minRow, maxRow + 1), Range(minCol, maxCol + 1));
 
 			// Store block info
-			imageBlocks.push_back({ { minRow, minCol }, getShapeIdx(shape) });
+			imageBlocks.push_back({ imageMat.cols * minRow + minCol - prvIdx, getShapeIdx(shape) });
+
+			// Store current index for next iteration
+			prvIdx = imageMat.cols * minRow + minCol;
 		}
 	}
 
@@ -58,12 +63,8 @@ void Compressor::encodeAdvanced() {
 
 	// Encode image blocks info
 	for (int i = 0; i < imageBlocks.size(); ++i) {
-		int row = imageBlocks[i].first.first;
-		compressedSizes.push_back(encodeToBase256(row));
-		int col = imageBlocks[i].first.second;
-		compressedSizes.push_back(encodeToBase256(col));
-		int idx = imageBlocks[i].second;
-		compressedSizes.push_back(encodeToBase256(idx));
+		compressedSizes.push_back(encodeToBase256(imageBlocks[i].first));
+		compressedSizes.push_back(encodeToBase256(imageBlocks[i].second));
 	}
 }
 
@@ -209,22 +210,25 @@ void Compressor::decodeAdvanced() {
 
 	imageMat = cv::Mat(rows, cols, CV_8U, cv::Scalar(255));
 	
+	int startIdx = 0;
+
 	// Retrieve image blocks info
 	while (sizeIdx + 1 < compressedSizes.size()) {
-		int row = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
+		int startOffset = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
 		dataIdx += compressedSizes[sizeIdx];
 
-		int col = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
+		int shapeIdx = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
 		dataIdx += compressedSizes[sizeIdx];
 
-		int idx = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-		dataIdx += compressedSizes[sizeIdx];
+		imageBlocks.push_back({ startOffset, shapeIdx });
 
-		imageBlocks.push_back({ { row, col }, idx });
+		startIdx += startOffset;
+		int startRow = startIdx / cols;
+		int startCol = startIdx % cols;
 
-		for (int i = 0; i < shapes[idx].rows; ++i) {
-			for (int j = 0; j < shapes[idx].cols; ++j) {
-				imageMat.at<uchar>(row + i, col + j) = shapes[idx].at<uchar>(i, j);
+		for (int i = 0; i < shapes[shapeIdx].rows; ++i) {
+			for (int j = 0; j < shapes[shapeIdx].cols; ++j) {
+				imageMat.at<uchar>(startRow + i, startCol + j) = shapes[shapeIdx].at<uchar>(i, j);
 			}
 		}
 		/*shapes[idx].copyTo(imageMat(
