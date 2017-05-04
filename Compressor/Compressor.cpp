@@ -44,7 +44,7 @@ void Compressor::encodeAdvanced() {
 			cv::Mat shape(imageMat, Range(minRow, maxRow + 1), Range(minCol, maxCol + 1));
 
 			// Store block info
-			imageBlocks.push_back({ imageMat.cols * minRow + minCol - prvIdx, getShapeIdx(shape) });
+			imageBlocks.push_back({ imageMat.cols * minRow + minCol - prvIdx, storeUniqueShape(shape) });
 
 			// Store current index for next iteration
 			prvIdx = imageMat.cols * minRow + minCol;
@@ -68,7 +68,7 @@ void Compressor::encodeAdvanced() {
 	}
 }
 
-int Compressor::getShapeIdx(const cv::Mat& shape) {
+int Compressor::storeUniqueShape(const cv::Mat& shape) {
 	for (int i = 0; i < shapes.size(); ++i) {
 		if (shape.size() != shapes[i].size())
 			continue;

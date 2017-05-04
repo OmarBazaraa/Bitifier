@@ -12,6 +12,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 // Custom libraries
+#include "Huffman.h"
 using namespace cv;
 using namespace std;
 
@@ -31,24 +32,41 @@ private:
 	int dirC[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 	int minRow, minCol, maxRow, maxCol;
 
+	//
+	// Compression functions
+	//
 public:
 	/**
 	 * Compress the given black & white jpg image
 	 */
 	void compress(const cv::Mat& imageMat, vector<uchar>& outputBytes);
 
-	/**
-	 * Extract the given compressed file to a black & white jpg image
-	 */
-	void extract(vector<uchar>& compressedBytes, cv::Mat& outputImage);
-
 private:
-
+	/**
+	 * Encode the image by detecting the repeated shapes and encode them once
+	 */
 	void encodeAdvanced();
-	int getShapeIdx(const cv::Mat& shape);
+
+	/**
+	 * Store the given shape and return a unique number representing it
+	 * if the shape already stored then it will not be inserted
+	 */
+	int storeUniqueShape(const cv::Mat& shape);
+
+	/**
+	 * Search the image using depth first search (DFS) algorithm to
+	 * detect the boundaries of the sphape around the given point
+	 */
 	void dfs(int row, int col);
+
+	/**
+	 * Check whether the given point is valid in the DFS movement
+	 */
 	bool valid(int row, int col);
 
+	/**
+	 * Encode the given image using run length encoding algorithm
+	 */
 	void encodeRunLength(const cv::Mat& img);
 
 	/**
@@ -65,8 +83,25 @@ private:
 
 	// ==============================================================================
 
+	//
+	// Extraction functions
+	//
+public:
+	/**
+	* Extract the given compressed file to a black & white jpg image
+	*/
+	void extract(vector<uchar>& compressedBytes, cv::Mat& outputImage);
+
+private:
+	/**
+	 * Decode the data by retrieving the distinct shapes then mapping all image blocks
+	 * to one of the shapes
+	 */
 	void decodeAdvanced();
 
+	/**
+	 * Decode the given encoded image using run length decoding algorithm
+	 */
 	void decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx);
 
 	/**
