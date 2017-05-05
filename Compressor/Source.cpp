@@ -27,8 +27,8 @@ inline void boostIO() {
 int main() {
 	boostIO();
 	int startTime = clock();
-	int originalFilesSize = 0;
-	int compressedFilesSize = 0;
+	long long originalFilesSize = 0;
+	long long compressedFilesSize = 0;
 	vector<pair<string, string>> files;
 
 	cout << fixed << setprecision(3);

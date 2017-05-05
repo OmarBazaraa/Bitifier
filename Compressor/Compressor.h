@@ -13,24 +13,33 @@
 
 // Custom libraries
 #include "Huffman.h"
+
 using namespace cv;
 using namespace std;
 
 class Compressor
 {
 private:
+	// Image variables
 	cv::Mat imageMat;
+	uchar dominantColor = 255;
+	uchar blockColor = 0;
 	vector<cv::Mat> shapes;
 	vector<pair<int, int>> imageBlocks;
+
+	// Compressed data variables
+	int bytesIdx = 0;
+	int sizesIdx = 0;
 	vector<int> compressedSizes;
 	vector<unsigned char> compressedBytes;
 
-private:
 	// DFS variables
 	cv::Mat vis;
 	int dirR[8] = { -1, -1, 0, 1, 1, 1, 0, -1 };
 	int dirC[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 	int minRow, minCol, maxRow, maxCol;
+
+	// ==============================================================================
 
 	//
 	// Compression functions
@@ -46,6 +55,16 @@ private:
 	 * Encode the image by detecting the repeated shapes and encode them once
 	 */
 	void encodeAdvanced();
+
+	/**
+	 * Detect the dominat color of the image
+	 */
+	void detectDominantColor();
+
+	/**
+	 * Detect image distinct shapes and map each image block to one of these shapes
+	 */
+	void detectImageBlocks();
 
 	/**
 	 * Store the given shape and return a unique number representing it
@@ -75,11 +94,10 @@ private:
 	void encodeMetaData();
 
 	/**
-	 * Convert the given integer to base 256 and stack them on
-	 * compressedBytes vector.
-	 * Return the number of digits of the given number in base 256
+	 * Convert the given integer to base 256 and stack it and its size on
+	 * compressedBytes and comressedSizes vectors respectivly
 	 */
-	int encodeToBase256(int number);
+	void encodeToBase256(int number);
 
 	// ==============================================================================
 
@@ -105,14 +123,18 @@ private:
 	void decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx);
 
 	/**
+	 * 
+	 */
+	void decodeImageBlocks();
+
+	/**
 	 * Decode image compressed meta-data needed in decompression process
 	 */
 	void decodeMetaData();
 
 	/**
-	 * Convert the given size of bytes from compressedBytes vector starting from idx
-	 * from base 256 to decimal.
+	 * Convert the currently pointed data from base 256 to decimal and increment the pointers.
 	 * Return the converted integer
 	 */
-	int decodeFromBase256(int idx, int size);
+	int decodeFromBase256();
 };

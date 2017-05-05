@@ -21,23 +21,60 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	encodeMetaData();
 
 	// Encode the compressed image using Huffman encoding algorithm
-	// and pass compressed data to function caller
 	Huffman huffman;
 	huffman.encode(this->compressedBytes, outputBytes);
-
-	// Pass compressed data to function caller
-	//outputBytes.swap(this->compressedBytes);
 }
 
 void Compressor::encodeAdvanced() {
+	// Encode compression configuration
+	// ...
+
+	// Store image rows & cols count
+	encodeToBase256(imageMat.rows);
+	encodeToBase256(imageMat.cols);
+
+	//detectDominantColor();
+	detectImageBlocks();
+
+	// Encode image distinct shapes
+	encodeToBase256(shapes.size());
+	for (int i = 0; i < shapes.size(); ++i) {
+		encodeRunLength(shapes[i]);
+	}
+
+	// Encode image blocks info
+	int prv = 0;
+	sort(imageBlocks.begin(), imageBlocks.end());
+	for (int i = 0; i < imageBlocks.size(); ++i) {
+		encodeToBase256(imageBlocks[i].first - prv);
+		encodeToBase256(imageBlocks[i].second);
+		prv = imageBlocks[i].first;
+	}
+}
+
+void Compressor::detectDominantColor() {
+	int colorCnt[2] = {};
+
+	for (int i = 0; i < imageMat.rows; ++i) {
+		for (int j = 0; j < imageMat.cols; ++j) {
+			bool color = ((int)imageMat.at<uchar>(i, j) > 0);
+			++colorCnt[color];
+		}
+	}
+
+	dominantColor = (colorCnt[0] > colorCnt[1] ? 0 : 255);
+	blockColor = (dominantColor > 0 ? 0 : 255);
+}
+
+void Compressor::detectImageBlocks() {
 	// Clear visited matrix
 	vis = cv::Mat::zeros(imageMat.rows, imageMat.cols, CV_8U);
 
 	// Scan common shapes
 	for (int i = 0; i < imageMat.rows; ++i) {
 		for (int j = 0; j < imageMat.cols; ++j) {
-			// Continue if previously visited or pixel is white
-			if (vis.at<bool>(i, j) || ((int)imageMat.at<uchar>(i, j) > 0))
+			// Continue if previously visited or pixel is of background color
+			if (vis.at<bool>(i, j) || imageMat.at<uchar>(i, j) == dominantColor)
 				continue;
 
 			// Get shape boundries
@@ -49,25 +86,6 @@ void Compressor::encodeAdvanced() {
 			// Store block info
 			imageBlocks.push_back({ imageMat.cols * minRow + minCol, storeUniqueShape(shape) });
 		}
-	}
-
-	// Store image rows & cols count
-	compressedSizes.push_back(encodeToBase256(imageMat.rows));
-	compressedSizes.push_back(encodeToBase256(imageMat.cols));
-
-	// Encode image distinct shapes
-	compressedSizes.push_back(encodeToBase256(shapes.size()));
-	for (int i = 0; i < shapes.size(); ++i) {
-		encodeRunLength(shapes[i]);
-	}
-
-	// Encode image blocks info
-	int prv = 0;
-	sort(imageBlocks.begin(), imageBlocks.end());
-	for (int i = 0; i < imageBlocks.size(); ++i) {
-		compressedSizes.push_back(encodeToBase256(imageBlocks[i].first - prv));
-		compressedSizes.push_back(encodeToBase256(imageBlocks[i].second));
-		prv = imageBlocks[i].first;
 	}
 }
 
@@ -106,13 +124,17 @@ void Compressor::dfs(int row, int col) {
 }
 
 bool Compressor::valid(int row, int col) {
-	return (row >= 0 && row < imageMat.rows && col >= 0 && col < imageMat.cols && !imageMat.at<bool>(row, col));
+	return (
+		row >= 0 && row < imageMat.rows &&
+		col >= 0 && col < imageMat.cols && 
+		imageMat.at<uchar>(row, col) == blockColor
+	);
 }
 
 void Compressor::encodeRunLength(const cv::Mat& img) {
 	// Store image rows & cols count
-	compressedSizes.push_back(encodeToBase256(img.rows));
-	compressedSizes.push_back(encodeToBase256(img.cols));
+	encodeToBase256(img.rows);
+	encodeToBase256(img.cols);
 
 	// Store image pixels
 	int cnt = 0;
@@ -125,13 +147,13 @@ void Compressor::encodeRunLength(const cv::Mat& img) {
 				++cnt;
 			}
 			else {
-				compressedSizes.push_back(encodeToBase256(cnt));
+				encodeToBase256(cnt);
 				cnt = 1;
 				prv = pixel;
 			}
 		}
 	}
-	compressedSizes.push_back(encodeToBase256(cnt));
+	encodeToBase256(cnt);
 }
 
 void Compressor::encodeMetaData() {
@@ -152,7 +174,7 @@ void Compressor::encodeMetaData() {
 	compressedBytes.push_back(cnt);
 }
 
-int Compressor::encodeToBase256(int number) {
+void Compressor::encodeToBase256(int number) {
 	int cnt = 0;
 
 	if (number == 0) {
@@ -166,7 +188,7 @@ int Compressor::encodeToBase256(int number) {
 		++cnt;
 	}
 
-	return cnt;
+	compressedSizes.push_back(cnt);
 }
 
 //
@@ -175,6 +197,7 @@ int Compressor::encodeToBase256(int number) {
 
 void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	// Clear previous records
+	bytesIdx = sizesIdx = 0;
 	this->compressedBytes.clear();
 	this->compressedSizes.clear();
 	this->shapes.clear();
@@ -197,60 +220,29 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 }
 
 void Compressor::decodeAdvanced() {
-	int dataIdx = 0, sizeIdx = -1;
+	// Retrieve compression configurations
+	// ...
 
 	// Retrieve image rows & cols count
-	int rows = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-	dataIdx += compressedSizes[sizeIdx];
-	int cols = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-	dataIdx += compressedSizes[sizeIdx];
+	int rows = decodeFromBase256();
+	int cols = decodeFromBase256();
 
 	// Retrieve image distinct shapes
-	int shapesCnt = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-	dataIdx += compressedSizes[sizeIdx];
-	
+	int shapesCnt = decodeFromBase256();
 	for (int i = 0; i < shapesCnt; ++i) {
 		cv::Mat shape;
-		decodeRunLength(shape, dataIdx, sizeIdx);
+		decodeRunLength(shape, bytesIdx, sizesIdx);
 		shapes.push_back(shape);
 	}
 
-	imageMat = cv::Mat(rows, cols, CV_8U, cv::Scalar(255));
-	
-	int startIdx = 0;
-
-	// Retrieve image blocks info
-	while (sizeIdx + 1 < compressedSizes.size()) {
-		int startOffset = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-		dataIdx += compressedSizes[sizeIdx];
-
-		int shapeIdx = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-		dataIdx += compressedSizes[sizeIdx];
-
-		imageBlocks.push_back({ startOffset, shapeIdx });
-
-		startIdx += startOffset;
-		int startRow = startIdx / cols;
-		int startCol = startIdx % cols;
-
-		for (int i = 0; i < shapes[shapeIdx].rows; ++i) {
-			for (int j = 0; j < shapes[shapeIdx].cols; ++j) {
-				imageMat.at<uchar>(startRow + i, startCol + j) = shapes[shapeIdx].at<uchar>(i, j);
-			}
-		}
-		/*shapes[idx].copyTo(imageMat(
-			Range(row, row + shapes[idx].rows - 1),
-			Range(col, col + shapes[idx].cols - 1)
-		));*/
-	}
+	imageMat = cv::Mat(rows, cols, CV_8U, cv::Scalar(dominantColor));
+	decodeImageBlocks();
 }
 
 void Compressor::decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx) {
 	// Retrieve image rows & cols count
-	int rows = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-	dataIdx += compressedSizes[sizeIdx];
-	int cols = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-	dataIdx += compressedSizes[sizeIdx];
+	int rows = decodeFromBase256();
+	int cols = decodeFromBase256();
 
 	// Retrieve image pixels
 	img = cv::Mat(rows, cols, CV_8U);
@@ -258,8 +250,7 @@ void Compressor::decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx) {
 	bool color = true;
 
 	while (i < rows) {
-		cnt = decodeFromBase256(dataIdx, compressedSizes[++sizeIdx]);
-		dataIdx += compressedSizes[sizeIdx];
+		cnt = decodeFromBase256();
 
 		while (cnt--) {
 			img.at<uchar>(i, j) = (color ? 255 : 0);
@@ -271,6 +262,28 @@ void Compressor::decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx) {
 		}
 
 		color = !color;
+	}
+}
+
+void Compressor::decodeImageBlocks() {
+	int startIdx = 0;
+
+	// Retrieve image blocks info
+	while (sizesIdx + 1 < compressedSizes.size()) {
+		int startOffset = decodeFromBase256();
+		int shapeIdx = decodeFromBase256();
+
+		imageBlocks.push_back({ startOffset, shapeIdx });
+
+		startIdx += startOffset;
+		int startRow = startIdx / imageMat.cols;
+		int startCol = startIdx % imageMat.cols;
+
+		for (int i = 0; i < shapes[shapeIdx].rows; ++i) {
+			for (int j = 0; j < shapes[shapeIdx].cols; ++j) {
+				imageMat.at<uchar>(startRow + i, startCol + j) = shapes[shapeIdx].at<uchar>(i, j);
+			}
+		}
 	}
 }
 
@@ -293,9 +306,12 @@ void Compressor::decodeMetaData() {
 	}
 }
 
-int Compressor::decodeFromBase256(int idx, int size) {
-	idx += size;
+int Compressor::decodeFromBase256() {
+	int size = compressedSizes[sizesIdx++];
+	int idx = size + bytesIdx;
 	int num = 0;
+
+	bytesIdx += size;
 
 	while (size--) {
 		num <<= 8;
