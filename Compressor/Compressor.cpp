@@ -26,15 +26,15 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 }
 
 void Compressor::encodeAdvanced() {
+	detectDominantColor();
+	detectImageBlocks();
+
 	// Encode compression configuration
-	// ...
+	compressedBytes.push_back(dominantColor);
 
 	// Store image rows & cols count
 	encodeToBase256(imageMat.rows);
 	encodeToBase256(imageMat.cols);
-
-	//detectDominantColor();
-	detectImageBlocks();
 
 	// Encode image distinct shapes
 	encodeToBase256(shapes.size());
@@ -68,13 +68,13 @@ void Compressor::detectDominantColor() {
 
 void Compressor::detectImageBlocks() {
 	// Clear visited matrix
-	vis = cv::Mat::zeros(imageMat.rows, imageMat.cols, CV_8U);
+	visited = cv::Mat::zeros(imageMat.rows, imageMat.cols, CV_8U);
 
 	// Scan common shapes
 	for (int i = 0; i < imageMat.rows; ++i) {
 		for (int j = 0; j < imageMat.cols; ++j) {
 			// Continue if previously visited or pixel is of background color
-			if (vis.at<bool>(i, j) || imageMat.at<uchar>(i, j) == dominantColor)
+			if (visited.at<bool>(i, j) || imageMat.at<uchar>(i, j) == dominantColor)
 				continue;
 
 			// Get shape boundries
@@ -110,14 +110,14 @@ void Compressor::dfs(int row, int col) {
 	maxCol = max(maxCol, col);
 
 	// Set current pixel as visisted
-	vis.at<bool>(row, col) = true;
+	visited.at<bool>(row, col) = true;
 
 	// Visit neighbours
 	for (int i = 0; i < 8; ++i) {
 		int toR = row + dirR[i];
 		int toC = col + dirC[i];
 
-		if (valid(toR, toC) && !vis.at<bool>(toR, toC)) {
+		if (valid(toR, toC) && !visited.at<bool>(toR, toC)) {
 			dfs(toR, toC);
 		}
 	}
@@ -141,7 +141,7 @@ void Compressor::encodeRunLength(const cv::Mat& img) {
 	bool pixel, prv = true;
 	for (int i = 0; i < img.rows; ++i) {
 		for (int j = 0; j < img.cols; ++j) {
-			pixel = ((int)img.at<uchar>(i, j) > 0);
+			pixel = (img.at<uchar>(i, j) == dominantColor);
 
 			if (prv == pixel) {
 				++cnt;
@@ -207,9 +207,6 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	Huffman huffman;
 	huffman.decode(compressedBytes, this->compressedBytes);
 
-	// Pass data to compressor object
-	//this->compressedBytes.swap(compressedBytes);
-
 	// Retrieve compression meta-data
 	decodeMetaData();
 
@@ -221,7 +218,8 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 
 void Compressor::decodeAdvanced() {
 	// Retrieve compression configurations
-	// ...
+	dominantColor = compressedBytes[bytesIdx++];
+	blockColor = (dominantColor > 0 ? 0 : 255);
 
 	// Retrieve image rows & cols count
 	int rows = decodeFromBase256();
@@ -231,7 +229,7 @@ void Compressor::decodeAdvanced() {
 	int shapesCnt = decodeFromBase256();
 	for (int i = 0; i < shapesCnt; ++i) {
 		cv::Mat shape;
-		decodeRunLength(shape, bytesIdx, sizesIdx);
+		decodeRunLength(shape);
 		shapes.push_back(shape);
 	}
 
@@ -239,7 +237,7 @@ void Compressor::decodeAdvanced() {
 	decodeImageBlocks();
 }
 
-void Compressor::decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx) {
+void Compressor::decodeRunLength(cv::Mat& img) {
 	// Retrieve image rows & cols count
 	int rows = decodeFromBase256();
 	int cols = decodeFromBase256();
@@ -253,7 +251,7 @@ void Compressor::decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx) {
 		cnt = decodeFromBase256();
 
 		while (cnt--) {
-			img.at<uchar>(i, j) = (color ? 255 : 0);
+			img.at<uchar>(i, j) = (color ? dominantColor : blockColor);
 
 			if (++j >= cols) {
 				++i;
@@ -291,7 +289,8 @@ void Compressor::decodeMetaData() {
 	int bytesCnt = 0;
 	int n = compressedBytes.size();
 
-	while (n >= 0 && n > bytesCnt) {
+	// minus 1 byte for configuration, TODO: to be implemented in better way
+	while (n >= 0 && n - 1 > bytesCnt) {
 		int cnt = (compressedBytes[--n] & 63);
 		int len = (compressedBytes[n] >> 6) + 1;
 		bytesCnt += cnt * len;
@@ -301,7 +300,7 @@ void Compressor::decodeMetaData() {
 		}
 	}
 
-	if (n != bytesCnt) {
+	if (n - 1 != bytesCnt) {
 		throw exception("Could not extract the given file");
 	}
 }

@@ -34,7 +34,7 @@ private:
 	vector<unsigned char> compressedBytes;
 
 	// DFS variables
-	cv::Mat vis;
+	cv::Mat visited;
 	int dirR[8] = { -1, -1, 0, 1, 1, 1, 0, -1 };
 	int dirC[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 	int minRow, minCol, maxRow, maxCol;
@@ -120,7 +120,7 @@ private:
 	/**
 	 * Decode the given encoded image using run length decoding algorithm
 	 */
-	void decodeRunLength(cv::Mat& img, int& dataIdx, int& sizeIdx);
+	void decodeRunLength(cv::Mat& img);
 
 	/**
 	 * 
