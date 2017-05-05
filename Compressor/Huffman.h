@@ -1,4 +1,5 @@
 #pragma once
+#include <fstream>
 #include <string>
 #include <vector>
 #include <bitset>
@@ -21,7 +22,10 @@ class Huffman
 	};
 
 private:
+	int dataIdx;
+	string encodedData;
 	map<uchar, string> codeTable;
+	map<string, uchar> codeTableInverse;
 
 	//
 	// Encoding functions
@@ -59,5 +63,9 @@ private:
 	// Helper functions
 	//
 private:
+	string byteToBinaryString(uchar byte);
+
+	void printCodeTable(string path);
+
 	void deleteTree(Node* node);
 };

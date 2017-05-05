@@ -20,8 +20,10 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	// Encode compression meta-data
 	encodeMetaData();
 
-	// Pass compressed data to function caller
-	outputBytes.swap(this->compressedBytes);
+	// Encode the compressed image using Huffman encoding algorithm
+	// and pass compressed data to function caller
+	Huffman huffman;
+	huffman.encode(this->compressedBytes, outputBytes);
 }
 
 void Compressor::encodeAdvanced() {
@@ -177,8 +179,9 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	this->shapes.clear();
 	this->imageBlocks.clear();
 	
-	// Pass data to compressor object
-	this->compressedBytes.swap(compressedBytes);
+	// Decode huffman encoded data and pass it to compressor object
+	Huffman huffman;
+	huffman.decode(compressedBytes, this->compressedBytes);
 
 	// Retrieve compression meta-data
 	decodeMetaData();

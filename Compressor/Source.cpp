@@ -4,7 +4,6 @@
 #include "Directory.h"
 #include "Utility.h"
 #include "Compressor.h"
-#include "Huffman.h"
 using namespace std;
 
 #define PATH_SAMPLE_DATA        "DataSet/"
@@ -64,10 +63,7 @@ int main() {
 			// Compressing
 			cout << "Compressing..." << endl;
 			compressor.compress(originalImg, compressedBytes);
-			Huffman huffman;
-			vector<uchar> vec;
-			huffman.encode(compressedBytes, vec);
-			int comSize = vec.size();
+			int comSize = compressedBytes.size();
 			compressedFilesSize += comSize;
 
 			// Saving compressed image
@@ -76,7 +72,7 @@ int main() {
 			
 			// ======================================================================
 
-			/*
+			///*
 			// Loading file
 			cout << "Loading compressed file..." << endl;
 			loadFile(cpr, compressedBytes);
@@ -95,7 +91,7 @@ int main() {
 				cout << "Lossy compression!" << endl;
 				return 0;
 			}
-			*/
+			//*/
 
 			cout << "Compression ratio: " << (double)orgSize / comSize << endl;
 			cout << "------------------------------------" << endl << endl;
