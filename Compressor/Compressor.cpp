@@ -24,13 +24,14 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	// and pass compressed data to function caller
 	Huffman huffman;
 	huffman.encode(this->compressedBytes, outputBytes);
+
+	// Pass compressed data to function caller
+	//outputBytes.swap(this->compressedBytes);
 }
 
 void Compressor::encodeAdvanced() {
 	// Clear visited matrix
 	vis = cv::Mat::zeros(imageMat.rows, imageMat.cols, CV_8U);
-
-	int prvIdx = 0;
 
 	// Scan common shapes
 	for (int i = 0; i < imageMat.rows; ++i) {
@@ -46,10 +47,7 @@ void Compressor::encodeAdvanced() {
 			cv::Mat shape(imageMat, Range(minRow, maxRow + 1), Range(minCol, maxCol + 1));
 
 			// Store block info
-			imageBlocks.push_back({ imageMat.cols * minRow + minCol - prvIdx, storeUniqueShape(shape) });
-
-			// Store current index for next iteration
-			prvIdx = imageMat.cols * minRow + minCol;
+			imageBlocks.push_back({ imageMat.cols * minRow + minCol, storeUniqueShape(shape) });
 		}
 	}
 
@@ -64,9 +62,12 @@ void Compressor::encodeAdvanced() {
 	}
 
 	// Encode image blocks info
+	int prv = 0;
+	sort(imageBlocks.begin(), imageBlocks.end());
 	for (int i = 0; i < imageBlocks.size(); ++i) {
-		compressedSizes.push_back(encodeToBase256(imageBlocks[i].first));
+		compressedSizes.push_back(encodeToBase256(imageBlocks[i].first - prv));
 		compressedSizes.push_back(encodeToBase256(imageBlocks[i].second));
+		prv = imageBlocks[i].first;
 	}
 }
 
@@ -182,6 +183,9 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	// Decode huffman encoded data and pass it to compressor object
 	Huffman huffman;
 	huffman.decode(compressedBytes, this->compressedBytes);
+
+	// Pass data to compressor object
+	//this->compressedBytes.swap(compressedBytes);
 
 	// Retrieve compression meta-data
 	decodeMetaData();

@@ -50,7 +50,6 @@ int main() {
 
 			// Compression variables
 			Compressor compressor;
-			
 			cv::Mat originalImg, uncompressedImg;
 			vector<uchar> compressedBytes;
 
