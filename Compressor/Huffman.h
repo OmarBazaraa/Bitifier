@@ -27,6 +27,7 @@ private:
 	map<uchar, string> codeTable;
 	map<string, uchar> codeTableInverse;
 
+	// ==============================================================================
 	//
 	// Encoding functions
 	//
@@ -45,7 +46,6 @@ private:
 	void traverseTree(Node* node, string code = "");
 
 	// ==============================================================================
-
 	//
 	// Decoding functions
 	//

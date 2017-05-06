@@ -191,6 +191,7 @@ void Compressor::encodeToBase256(int number) {
 	compressedSizes.push_back(cnt);
 }
 
+// ==============================================================================
 //
 // Extraction functions
 //

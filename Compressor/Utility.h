@@ -16,19 +16,13 @@ using namespace std;
  */
 inline cv::Mat loadBinaryImage(const string& path) {
 	// Load colored image from file
-	cv::Mat rgbMat = imread(path, CV_LOAD_IMAGE_COLOR);
+	cv::Mat grayMat = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
 
 	// Check for invalid input
-	if (rgbMat.empty() || !rgbMat.data) {
+	if (grayMat.empty() || !grayMat.data) {
 		string errorMessage = "Could not load the image at: " + path;
 		throw exception(errorMessage.c_str());
 	}
-
-	// Grayscale matrix
-	cv::Mat grayMat(rgbMat.size(), CV_8U);
-
-	// Convert BGR to Gray
-	cv::cvtColor(rgbMat, grayMat, CV_BGR2GRAY);
 
 	// Binary image
 	cv::Mat binaryMat(grayMat.size(), grayMat.type());

@@ -5,6 +5,9 @@
 //
 
 void Huffman::encode(const vector<uchar>& data, vector<uchar>& encodedData) {
+	if (data.empty())
+		return;
+
 	buildCodeTable(data);
 	encodeCodeTable(encodedData);
 
@@ -86,9 +89,10 @@ void Huffman::buildCodeTable(const vector<uchar>& data) {
 	while (symbols.size() > 1) {
 		int freq = 0;
 		Node* n = new Node();
-		
-		// Combine the least frequent two nodes into one node
 
+		//
+		// Combine the least frequent two nodes into one node
+		//
 		// First node
 		freq += symbols.begin()->first;
 		n->left = symbols.begin()->second;
@@ -123,6 +127,7 @@ void Huffman::traverseTree(Node* node, string code) {
 	}
 }
 
+// ==============================================================================
 //
 // Decoding functions
 //
@@ -135,11 +140,10 @@ void Huffman::decode(const vector<uchar>& data, vector<uchar>& decodedData) {
 	while (dataIdx + 2 < data.size()) {
 		binaryStr += byteToBinaryString(data[++dataIdx]);
 	}
-
 	int ingnoreCount = data.back();
 	binaryStr.erase(binaryStr.size() - ingnoreCount, binaryStr.size());
 
-	//
+	// Detect code words and map them to their corresponding symbol
 	string code;
 	for (int i = 0; i < binaryStr.size(); ++i) {
 		code += binaryStr[i];
@@ -166,14 +170,15 @@ void Huffman::decodeCodeTable(const vector<uchar>& data) {
 		totalCodewordLengths += symbols[i].second;
 	}
 
-	// 
+	// Loop to get all distinct code words concatenated together
 	string codewords;
 	int codewordsBytesCount = (totalCodewordLengths + 7) / 8;	// ceil(totalCodewordLengths / 8)
 	for (int i = 0; i < codewordsBytesCount; ++i) {
 		codewords += byteToBinaryString(data[++dataIdx]);
 	}
 
-	// 
+	// Build Huffman code word table by spliting the previous string accourding to the lengths
+	// of the code words
 	int l = 0;
 	for (int i = 0; i < symbolsCount; ++i) {
 		int len = symbols[i].second;
@@ -183,6 +188,7 @@ void Huffman::decodeCodeTable(const vector<uchar>& data) {
 	}
 }
 
+// ==============================================================================
 //
 // Helper functions
 //

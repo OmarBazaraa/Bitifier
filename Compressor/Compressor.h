@@ -31,7 +31,7 @@ private:
 	int bytesIdx = 0;
 	int sizesIdx = 0;
 	vector<int> compressedSizes;
-	vector<unsigned char> compressedBytes;
+	vector<uchar> compressedBytes;
 
 	// DFS variables
 	cv::Mat visited;
@@ -40,7 +40,6 @@ private:
 	int minRow, minCol, maxRow, maxCol;
 
 	// ==============================================================================
-
 	//
 	// Compression functions
 	//
@@ -100,7 +99,6 @@ private:
 	void encodeToBase256(int number);
 
 	// ==============================================================================
-
 	//
 	// Extraction functions
 	//
