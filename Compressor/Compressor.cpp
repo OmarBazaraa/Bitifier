@@ -7,6 +7,7 @@
 void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	// Clear previous records
 	this->compressedData.clear();
+	this->concatenatedData.clear();
 	this->shapes.clear();
 	this->imageBlocks.clear();
 
@@ -18,21 +19,19 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 
 	// Concatenate compressed data bits
 	BitConcatenator concat;
-	vector<uchar> concatenatedData;
-	concat.concatenate(this->compressedData, concatenatedData);
+	concat.concatenate(this->compressedData, this->concatenatedData);
+
+	// Encode compression meta-data
+	encodeMetaData();
 
 	// Encode the compressed image using Huffman encoding algorithm
 	Huffman huffman;
-	huffman.encode(concatenatedData, outputBytes);
+	huffman.encode(this->concatenatedData, outputBytes);
 }
 
 void Compressor::encodeAdvanced() {
 	detectDominantColor();
 	detectImageBlocks();
-
-	// Encode compression configuration
-	// TODO: add configuration after concatenating data bits
-	compressedData.push_back(dominantColor);
 
 	// Store image rows & cols count
 	compressedData.push_back(imageMat.rows);
@@ -55,17 +54,16 @@ void Compressor::encodeAdvanced() {
 }
 
 void Compressor::detectDominantColor() {
-	int colorCnt[2] = {};
+	int whiteCnt = 0;
 
 	for (int i = 0; i < imageMat.rows; ++i) {
 		for (int j = 0; j < imageMat.cols; ++j) {
-			bool color = ((int)imageMat.at<uchar>(i, j) > 0);
-			++colorCnt[color];
+			whiteCnt += ((int)imageMat.at<uchar>(i, j) > 0);
 		}
 	}
 
-	dominantColor = (colorCnt[0] > colorCnt[1] ? 0 : 255);
-	blockColor = (dominantColor > 0 ? 0 : 255);
+	dominantColor = (whiteCnt * 2 > imageMat.rows * imageMat.cols ? 255 : 0);
+	blockColor = 255 - dominantColor;
 }
 
 void Compressor::detectImageBlocks() {
@@ -158,6 +156,11 @@ void Compressor::encodeRunLength(const cv::Mat& img) {
 	compressedData.push_back(cnt);
 }
 
+void Compressor::encodeMetaData() {
+	// Encode compression configuration
+	concatenatedData.push_back(dominantColor == 255 ? 1 : 0);
+}
+
 // ==============================================================================
 //
 // Extraction functions
@@ -167,29 +170,29 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	// Clear previous records
 	dataIdx = 0;
 	this->compressedData.clear();
+	this->concatenatedData.clear();
 	this->shapes.clear();
 	this->imageBlocks.clear();
 	
 	// Decode huffman encoded data and pass it to compressor object
 	Huffman huffman;
-	vector<uchar> concatenatedData;
-	huffman.decode(compressedBytes, concatenatedData);
+	huffman.decode(compressedBytes, this->concatenatedData);
+
+	// Retrieve compression meta-data
+	decodeMetaData();
 
 	// De-concatenate compressed data bits
 	BitConcatenator concat;
-	concat.deconcatenate(concatenatedData, this->compressedData);
+	concat.deconcatenate(this->concatenatedData, this->compressedData);
 
 	// Decode image
 	decodeAdvanced();
 
+	// Pass image to function caller
 	outputImage = this->imageMat;
 }
 
 void Compressor::decodeAdvanced() {
-	// Retrieve compression configurations
-	dominantColor = compressedData[dataIdx++];
-	blockColor = (dominantColor > 0 ? 0 : 255);
-
 	// Retrieve image rows & cols count
 	int rows = compressedData[dataIdx++];
 	int cols = compressedData[dataIdx++];
@@ -252,4 +255,14 @@ void Compressor::decodeImageBlocks() {
 			}
 		}
 	}
+}
+
+void Compressor::decodeMetaData() {
+	// Decode compression configuration
+	uchar config = concatenatedData.back();
+	concatenatedData.pop_back();
+
+	// Retrieve dominant and block colors
+	dominantColor = (config == 1 ? 255 : 0);
+	blockColor = 255 - dominantColor;
 }

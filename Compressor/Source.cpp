@@ -32,7 +32,7 @@ int main() {
 	vector<pair<string, string>> files;
 
 	cout << fixed << setprecision(3);
-	
+
 	try {
 		// Read files info
 		getFilesInDirectory(PATH_SAMPLE_DATA, files);

@@ -31,6 +31,7 @@ private:
 	// Compressed data variables
 	int dataIdx = 0;
 	vector<int> compressedData;
+	vector<uchar> concatenatedData;
 
 	// DFS variables
 	cv::Mat visited;
@@ -86,6 +87,11 @@ private:
 	 */
 	void encodeRunLength(const cv::Mat& img);
 
+	/**
+	 * Encode meta-data needed in decompression process
+	 */
+	void encodeMetaData();
+
 	// ==============================================================================
 	//
 	// Extraction functions
@@ -112,4 +118,9 @@ private:
 	 * 
 	 */
 	void decodeImageBlocks();
+
+	/**
+	 * Decode image compressed meta-data needed in decompression process
+	 */
+	void decodeMetaData();
 };
