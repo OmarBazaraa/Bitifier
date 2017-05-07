@@ -6,58 +6,50 @@
 
 void BitsConcatenator::concatenate(const vector<int>& data, vector<uchar>& outputData) {
 	// Clear previous data
-	bytesIdx = sizesIdx = 0;
+	dataBitStr.clear();
+	dataSizesBitStr.clear();
 	compressedBytes.clear();
-	compressedSizes.clear();
-
-	// Swap the two vectors
-	compressedBytes.swap(outputData);
 
 	// Concatenate data
 	for (int i = 0; i < data.size(); ++i) {
-		encodeToBase256(data[i]);
+		encodeBinary(data[i]);
 	}
-	encodeMetaData();
 
-	// Swap the two vectors again to return concatenated data to function caller
-	compressedBytes.swap(outputData);
+	encodeBitString(dataBitStr + dataSizesBitStr);
+
+	// Swap the two vectors to return concatenated data to function caller
+	outputData.swap(compressedBytes);
 }
 
-void BitsConcatenator::encodeMetaData() {
-	int cnt = 1;
-	int prv = compressedSizes.back();
+void BitsConcatenator::encodeBitString(const string& str) {
+	uchar byte = 0;
+	int bitsCount = 0;
 
-	for (int i = (int)compressedSizes.size() - 2; i >= 0; --i) {
-		if (prv == compressedSizes[i] && cnt < 63) {
-			++cnt;
-		}
-		else {
-			cnt |= (prv - 1) << 6;
-			compressedBytes.push_back(cnt);
-			cnt = 1;
-			prv = compressedSizes[i];
+	for (int i = 0; i < dataBitStr.size(); ++i) {
+		byte |= (dataBitStr[i] - '0') << bitsCount++;
+
+		if (bitsCount >= 8) {
+			compressedBytes.push_back(byte);
+			byte = 0;
+			bitsCount = 0;
 		}
 	}
 
-	cnt |= (prv - 1) << 6;
-	compressedBytes.push_back(cnt);
+	if (bitsCount > 0) {
+		compressedBytes.push_back(byte);
+	}
 }
 
-void BitsConcatenator::encodeToBase256(int number) {
-	int cnt = 0;
+void BitsConcatenator::encodeBinary(int number) {
+	string bitStr = toBinary(number);
+	string bitsCountStr = toBinary(bitStr.size() - 1);
 
-	if (number == 0) {
-		compressedBytes.push_back(number);
-		++cnt;
+	if (bitsCountStr.size() > 5) {
+		throw exception("Bits concatenation fialed");
 	}
 
-	while (number > 0) {
-		compressedBytes.push_back(number);
-		number >>= 8;	// divide 256
-		++cnt;
-	}
-
-	compressedSizes.push_back(cnt);
+	dataBitStr += bitStr;
+	dataSizesBitStr += bitsCountStr + string(5 - bitsCountStr.size(), '0');
 }
 
 // ==============================================================================
@@ -66,39 +58,69 @@ void BitsConcatenator::encodeToBase256(int number) {
 //
 
 void BitsConcatenator::deconcatenate(const vector<uchar>& data, vector<int>& outputData) {
+	// Clear previous data
+	dataBitStr.clear();
+	dataSizesBitStr.clear();
+	compressedBytes.clear();
 
-}
-
-void BitsConcatenator::decodeMetaData() {
-	int bytesCnt = 0;
-	int n = compressedBytes.size();
-
-	// minus 1 byte for configuration, TODO: to be implemented in better way
-	while (n >= 0 && n - 1 > bytesCnt) {
-		int cnt = (compressedBytes[--n] & 63);
-		int len = (compressedBytes[n] >> 6) + 1;
-		bytesCnt += cnt * len;
-
-		for (int i = 0; i < cnt; ++i) {
-			compressedSizes.push_back(len);
-		}
+	// Concatenate data
+	for (int i = 0; i < data.size(); ++i) {
+		dataBitStr += toBinary(data[i]);
 	}
 
-	if (n - 1 != bytesCnt) {
-		throw exception("Could not extract the given file");
+	decodeDataSizes();
+	decodeBitString(outputData);
+}
+
+void BitsConcatenator::decodeBitString(vector<int>& outputData) {
+	int i = 0;
+
+	while (!dataSizes.empty()) {
+		int size = dataSizes.top();
+		int data = toDecimal(dataBitStr.substr(i, size));
+		outputData.push_back(data);
+		dataSizes.pop();
+		i += size;
 	}
 }
 
-int BitsConcatenator::decodeFromBase256() {
-	int size = compressedSizes[sizesIdx++];
-	int idx = size + bytesIdx;
+int BitsConcatenator::decodeDataSizes() {
+	int n = dataBitStr.size();
+	int dataBitsCount = 0;
+
+	while (n > dataBitsCount) {
+		int size = toDecimal(dataBitStr.substr(n - 5));
+		dataBitsCount += size;
+		dataSizes.push(size);
+		dataBitStr.erase(n -= 5, n);
+	}
+}
+
+// ==============================================================================
+//
+// Helper functions
+//
+
+string BitsConcatenator::toBinary(int number) {
+	if (number == 0) {
+		return "0";
+	}
+
+	string bitStr;
+
+	while (number > 0) {
+		bitStr += '0' + (number & 1);
+		number >>= 1;
+	}
+
+	return bitStr;
+}
+
+int BitsConcatenator::toDecimal(string& binary) {
 	int num = 0;
 
-	bytesIdx += size;
-
-	while (size--) {
-		num <<= 8;
-		num |= compressedBytes[--idx];
+	for (int i = 0; i < binary.size(); ++i) {
+		num |= (binary[i] - '0') << i;
 	}
 
 	return num;

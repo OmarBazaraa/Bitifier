@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <stack>
 using namespace std;
 
 typedef unsigned char uchar;
@@ -7,10 +8,11 @@ typedef unsigned char uchar;
 class BitsConcatenator
 {
 private:
-	int bytesIdx = 0;
-	int sizesIdx = 0;
-	vector<int> compressedSizes;
-	vector<unsigned char> compressedBytes;
+	string dataBitStr;
+	string dataSizesBitStr;
+
+	vector<uchar> compressedBytes;
+	stack<int> dataSizes;
 
 	// ==============================================================================
 	//
@@ -20,9 +22,9 @@ public:
 	void concatenate(const vector<int>& data, vector<uchar>& outputData);
 
 private:
-	void encodeMetaData();
+	void encodeBitString(const string& str);
 
-	void encodeToBase256(int number);
+	void encodeBinary(int number);
 
 	// ==============================================================================
 	//
@@ -32,7 +34,16 @@ public:
 	void deconcatenate(const vector<uchar>& data, vector<int>& outputData);
 
 private:
-	void decodeMetaData();
+	void decodeBitString(vector<int>& outputData);
 
-	int decodeFromBase256();
+	int decodeDataSizes();
+
+	// ==============================================================================
+	//
+	// Helper functions
+	//
+private:
+	string toBinary(int number);
+
+	int toDecimal(string& binary);
 };

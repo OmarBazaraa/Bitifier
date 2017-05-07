@@ -102,6 +102,7 @@ void Huffman::buildCodeTable(const vector<uchar>& data) {
 		n->right = symbols.begin()->second;
 		symbols.erase(symbols.begin());
 
+		// Insert the combined node
 		symbols.insert({ freq, n });
 	}
 
