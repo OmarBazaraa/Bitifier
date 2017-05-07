@@ -12,6 +12,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 // Custom libraries
+#include "BitConcatenator.h"
 #include "Huffman.h"
 
 using namespace cv;
@@ -28,10 +29,8 @@ private:
 	vector<pair<int, int>> imageBlocks;
 
 	// Compressed data variables
-	int bytesIdx = 0;
-	int sizesIdx = 0;
-	vector<int> compressedSizes;
-	vector<uchar> compressedBytes;
+	int dataIdx = 0;
+	vector<int> compressedData;
 
 	// DFS variables
 	cv::Mat visited;
@@ -87,17 +86,6 @@ private:
 	 */
 	void encodeRunLength(const cv::Mat& img);
 
-	/**
-	 * Encode meta-data needed in decompression process
-	 */
-	void encodeMetaData();
-
-	/**
-	 * Convert the given integer to base 256 and stack it and its size on
-	 * compressedBytes and comressedSizes vectors respectivly
-	 */
-	void encodeToBase256(int number);
-
 	// ==============================================================================
 	//
 	// Extraction functions
@@ -124,15 +112,4 @@ private:
 	 * 
 	 */
 	void decodeImageBlocks();
-
-	/**
-	 * Decode image compressed meta-data needed in decompression process
-	 */
-	void decodeMetaData();
-
-	/**
-	 * Convert the currently pointed data from base 256 to decimal and increment the pointers.
-	 * Return the converted integer
-	 */
-	int decodeFromBase256();
 };

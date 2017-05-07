@@ -6,8 +6,7 @@
 
 void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	// Clear previous records
-	this->compressedBytes.clear();
-	this->compressedSizes.clear();
+	this->compressedData.clear();
 	this->shapes.clear();
 	this->imageBlocks.clear();
 
@@ -16,13 +15,15 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 
 	// Encode image
 	encodeAdvanced();
-	
-	// Encode compression meta-data
-	encodeMetaData();
+
+	// Concatenate compressed data bits
+	BitConcatenator concat;
+	vector<uchar> concatenatedData;
+	concat.concatenate(this->compressedData, concatenatedData);
 
 	// Encode the compressed image using Huffman encoding algorithm
 	Huffman huffman;
-	huffman.encode(this->compressedBytes, outputBytes);
+	huffman.encode(concatenatedData, outputBytes);
 }
 
 void Compressor::encodeAdvanced() {
@@ -30,14 +31,15 @@ void Compressor::encodeAdvanced() {
 	detectImageBlocks();
 
 	// Encode compression configuration
-	compressedBytes.push_back(dominantColor);
+	// TODO: add configuration after concatenating data bits
+	compressedData.push_back(dominantColor);
 
 	// Store image rows & cols count
-	encodeToBase256(imageMat.rows);
-	encodeToBase256(imageMat.cols);
+	compressedData.push_back(imageMat.rows);
+	compressedData.push_back(imageMat.cols);
 
 	// Encode image distinct shapes
-	encodeToBase256(shapes.size());
+	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
 		encodeRunLength(shapes[i]);
 	}
@@ -46,8 +48,8 @@ void Compressor::encodeAdvanced() {
 	int prv = 0;
 	sort(imageBlocks.begin(), imageBlocks.end());
 	for (int i = 0; i < imageBlocks.size(); ++i) {
-		encodeToBase256(imageBlocks[i].first - prv);
-		encodeToBase256(imageBlocks[i].second);
+		compressedData.push_back(imageBlocks[i].first - prv);
+		compressedData.push_back(imageBlocks[i].second);
 		prv = imageBlocks[i].first;
 	}
 }
@@ -133,8 +135,8 @@ bool Compressor::valid(int row, int col) {
 
 void Compressor::encodeRunLength(const cv::Mat& img) {
 	// Store image rows & cols count
-	encodeToBase256(img.rows);
-	encodeToBase256(img.cols);
+	compressedData.push_back(img.rows);
+	compressedData.push_back(img.cols);
 
 	// Store image pixels
 	int cnt = 0;
@@ -147,48 +149,13 @@ void Compressor::encodeRunLength(const cv::Mat& img) {
 				++cnt;
 			}
 			else {
-				encodeToBase256(cnt);
+				compressedData.push_back(cnt);
 				cnt = 1;
 				prv = pixel;
 			}
 		}
 	}
-	encodeToBase256(cnt);
-}
-
-void Compressor::encodeMetaData() {
-	int cnt = 1;
-	int prv = compressedSizes.back();
-	for (int i = (int)compressedSizes.size() - 2; i >= 0; --i) {
-		if (prv == compressedSizes[i] && cnt < 63) {
-			++cnt;
-		}
-		else {
-			cnt |= (prv - 1) << 6;
-			compressedBytes.push_back(cnt);
-			cnt = 1;
-			prv = compressedSizes[i];
-		}
-	}
-	cnt |= (prv - 1) << 6;
-	compressedBytes.push_back(cnt);
-}
-
-void Compressor::encodeToBase256(int number) {
-	int cnt = 0;
-
-	if (number == 0) {
-		compressedBytes.push_back(number);
-		++cnt;
-	}
-
-	while (number > 0) {
-		compressedBytes.push_back(number);
-		number >>= 8;	// divide 256
-		++cnt;
-	}
-
-	compressedSizes.push_back(cnt);
+	compressedData.push_back(cnt);
 }
 
 // ==============================================================================
@@ -198,18 +165,19 @@ void Compressor::encodeToBase256(int number) {
 
 void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	// Clear previous records
-	bytesIdx = sizesIdx = 0;
-	this->compressedBytes.clear();
-	this->compressedSizes.clear();
+	dataIdx = 0;
+	this->compressedData.clear();
 	this->shapes.clear();
 	this->imageBlocks.clear();
 	
 	// Decode huffman encoded data and pass it to compressor object
 	Huffman huffman;
-	huffman.decode(compressedBytes, this->compressedBytes);
+	vector<uchar> concatenatedData;
+	huffman.decode(compressedBytes, concatenatedData);
 
-	// Retrieve compression meta-data
-	decodeMetaData();
+	// De-concatenate compressed data bits
+	BitConcatenator concat;
+	concat.deconcatenate(concatenatedData, this->compressedData);
 
 	// Decode image
 	decodeAdvanced();
@@ -219,15 +187,15 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 
 void Compressor::decodeAdvanced() {
 	// Retrieve compression configurations
-	dominantColor = compressedBytes[bytesIdx++];
+	dominantColor = compressedData[dataIdx++];
 	blockColor = (dominantColor > 0 ? 0 : 255);
 
 	// Retrieve image rows & cols count
-	int rows = decodeFromBase256();
-	int cols = decodeFromBase256();
+	int rows = compressedData[dataIdx++];
+	int cols = compressedData[dataIdx++];
 
 	// Retrieve image distinct shapes
-	int shapesCnt = decodeFromBase256();
+	int shapesCnt = compressedData[dataIdx++];
 	for (int i = 0; i < shapesCnt; ++i) {
 		cv::Mat shape;
 		decodeRunLength(shape);
@@ -240,8 +208,8 @@ void Compressor::decodeAdvanced() {
 
 void Compressor::decodeRunLength(cv::Mat& img) {
 	// Retrieve image rows & cols count
-	int rows = decodeFromBase256();
-	int cols = decodeFromBase256();
+	int rows = compressedData[dataIdx++];
+	int cols = compressedData[dataIdx++];
 
 	// Retrieve image pixels
 	img = cv::Mat(rows, cols, CV_8U);
@@ -249,7 +217,7 @@ void Compressor::decodeRunLength(cv::Mat& img) {
 	bool color = true;
 
 	while (i < rows) {
-		cnt = decodeFromBase256();
+		cnt = compressedData[dataIdx++];
 
 		while (cnt--) {
 			img.at<uchar>(i, j) = (color ? dominantColor : blockColor);
@@ -268,9 +236,9 @@ void Compressor::decodeImageBlocks() {
 	int startIdx = 0;
 
 	// Retrieve image blocks info
-	while (sizesIdx + 1 < compressedSizes.size()) {
-		int startOffset = decodeFromBase256();
-		int shapeIdx = decodeFromBase256();
+	while (dataIdx + 1 < compressedData.size()) {
+		int startOffset = compressedData[dataIdx++];
+		int shapeIdx = compressedData[dataIdx++];
 
 		imageBlocks.push_back({ startOffset, shapeIdx });
 
@@ -284,39 +252,4 @@ void Compressor::decodeImageBlocks() {
 			}
 		}
 	}
-}
-
-void Compressor::decodeMetaData() {
-	int bytesCnt = 0;
-	int n = compressedBytes.size();
-
-	// minus 1 byte for configuration, TODO: to be implemented in better way
-	while (n >= 0 && n - 1 > bytesCnt) {
-		int cnt = (compressedBytes[--n] & 63);
-		int len = (compressedBytes[n] >> 6) + 1;
-		bytesCnt += cnt * len;
-
-		for (int i = 0; i < cnt; ++i) {
-			compressedSizes.push_back(len);
-		}
-	}
-
-	if (n - 1 != bytesCnt) {
-		throw exception("Could not extract the given file");
-	}
-}
-
-int Compressor::decodeFromBase256() {
-	int size = compressedSizes[sizesIdx++];
-	int idx = size + bytesIdx;
-	int num = 0;
-
-	bytesIdx += size;
-
-	while (size--) {
-		num <<= 8;
-		num |= compressedBytes[--idx];
-	}
-
-	return num;
 }

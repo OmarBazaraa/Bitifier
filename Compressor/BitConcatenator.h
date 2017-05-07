@@ -1,42 +1,48 @@
 #pragma once
+#include <fstream>
 #include <vector>
 #include <stack>
+#include <map>
 using namespace std;
 
 typedef unsigned char uchar;
 
-class BitsConcatenator
+class BitConcatenator
 {
 private:
-	string dataBitStr;
-	string dataSizesBitStr;
-
-	vector<uchar> compressedBytes;
-	stack<int> dataSizes;
+	int bytesIdx = 0;
+	int sizesIdx = 0;
+	vector<int> rawData;
+	vector<uchar> compressedData;
+	vector<int> compressedDataSizes;
 
 	// ==============================================================================
 	//
 	// Concatenation functions
 	//
 public:
-	void concatenate(const vector<int>& data, vector<uchar>& outputData);
+	void concatenate(vector<int>& data, vector<uchar>& outputData);
 
 private:
-	void encodeBitString(const string& str);
+	void encodeData();
 
-	void encodeBinary(int number);
+	void encodeDataSizes();
+
+	void encodeToBase256(int number);
 
 	// ==============================================================================
 	//
 	// Deconcatenation functions
 	//
 public:
-	void deconcatenate(const vector<uchar>& data, vector<int>& outputData);
+	void deconcatenate(vector<uchar>& data, vector<int>& outputData);
 
 private:
-	void decodeBitString(vector<int>& outputData);
+	void decodeData();
 
-	int decodeDataSizes();
+	void decodeDataSizes();
+
+	int decodeFromBase256();
 
 	// ==============================================================================
 	//
