@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <queue>
+#include <unordered_map>
 
 // OpenCV libraries
 #include <opencv2/core/core.hpp>
@@ -14,6 +15,7 @@
 // Custom libraries
 #include "BitConcatenator.h"
 #include "Huffman.h"
+#include "LZW.h"
 
 using namespace cv;
 using namespace std;
@@ -25,8 +27,10 @@ private:
 	cv::Mat imageMat;
 	uchar dominantColor = 255;
 	uchar blockColor = 0;
-	vector<cv::Mat> shapes;
-	vector<pair<int, int>> imageBlocks;
+	vector<cv::Mat> shapes;                 // Vector of distinct shapes matrices
+	vector<vector<int>> shapeBlocks;        // Vector holding the block indecies for each distinct shape
+	vector<pair<int, int>> imageBlocks;     // Vector holding all image blocks starting pixel and the reference shape index
+	unordered_map<int, int> blockShapes;    // Maps block to its reference shape
 
 	// Compressed data variables
 	int dataIdx = 0;
@@ -56,9 +60,24 @@ private:
 	void encodeAdvanced();
 
 	/**
-	 * Detect the dominat color of the image
+	 * Encode image distinct shapes after detecting them by calling detectImageBlocks function
 	 */
-	void detectDominantColor();
+	void encodeDistinctShapes();
+
+	/**
+	 * Encode image blocks upper left pixel indecies
+	 */
+	void encodeImageBlocks();
+
+	/**
+	 * Encode the given image using run length encoding algorithm
+	 */
+	void encodeRunLength(const cv::Mat& img);
+
+	/**
+	 * Encode meta-data needed in decompression process
+	 */
+	void encodeMetaData();
 
 	/**
 	 * Detect image distinct shapes and map each image block to one of these shapes
@@ -81,16 +100,11 @@ private:
 	 * Check whether the given point is valid in the DFS movement
 	 */
 	bool valid(int row, int col);
-
+	
 	/**
-	 * Encode the given image using run length encoding algorithm
+	 * Detect the dominat color of the image
 	 */
-	void encodeRunLength(const cv::Mat& img);
-
-	/**
-	 * Encode meta-data needed in decompression process
-	 */
-	void encodeMetaData();
+	void detectDominantColor();
 
 	// ==============================================================================
 	//
@@ -110,14 +124,19 @@ private:
 	void decodeAdvanced();
 
 	/**
+	 * Decode image distinct shapes and their refering blocks indecies
+	 */
+	void decodeDistinctShapes();
+
+	/**
+	 * Decode image blocks starting pixel indecies
+	 */
+	void decodeImageBlocks();
+
+	/**
 	 * Decode the given encoded image using run length decoding algorithm
 	 */
 	void decodeRunLength(cv::Mat& img);
-
-	/**
-	 * 
-	 */
-	void decodeImageBlocks();
 
 	/**
 	 * Decode image compressed meta-data needed in decompression process
