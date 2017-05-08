@@ -21,7 +21,7 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	encodeAdvanced();
 
 	// Concatenate compressed data bits
-	BitConcatenator concat;
+	LZWBitConcatenator concat;
 	concat.concatenate(this->compressedData, this->concatenatedData);
 
 	// Encode compression meta-data
@@ -30,6 +30,24 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	// Encode the compressed image using Huffman encoding algorithm
 	Huffman huffman;
 	huffman.encode(this->concatenatedData, outputBytes);
+
+	////
+	//vector<uchar> temp;
+	//LZW lzw;
+	//lzw.encode(this->concatenatedData, temp);
+
+	//// Encode the compressed image using Huffman encoding algorithm
+	//Huffman huffman;
+	//huffman.encode(temp, outputBytes);
+
+	//// Encode the compressed image using Huffman encoding algorithm
+	//vector<uchar> temp;
+	//Huffman huffman;
+	//huffman.encode(this->concatenatedData, temp);
+
+	////
+	//LZW lzw;
+	//lzw.encode(temp, outputBytes);
 }
 
 void Compressor::encodeAdvanced() {
@@ -215,7 +233,7 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	decodeMetaData();
 
 	// De-concatenate compressed data bits
-	BitConcatenator concat;
+	LZWBitConcatenator concat;
 	concat.deconcatenate(this->concatenatedData, this->compressedData);
 
 	// Decode image

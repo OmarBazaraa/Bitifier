@@ -15,7 +15,20 @@ void BitConcatenatorBeta::concatenate(const vector<int>& data, vector<uchar>& ou
 		encodeBinary(data[i]);
 	}
 
+	/*map<int, int> frq;
+	for (int x : dataSizesLengths) {
+		frq[x]++;
+	}
+
+	for (auto it : frq) {
+		cout << it.first << "\t" << it.second << endl;
+	}*/
+
+	//Huffman huffman;
+	//huffman.encode(dataSizesLengths, compressedBytes);
+
 	encodeBitString(dataBitStr + dataSizesBitStr);
+	//encodeMetaData();
 
 	// Swap the two vectors to return concatenated data to function caller
 	outputData.swap(compressedBytes);
@@ -25,8 +38,8 @@ void BitConcatenatorBeta::encodeBitString(const string& str) {
 	uchar byte = 0;
 	int bitsCount = 0;
 
-	for (int i = 0; i < dataBitStr.size(); ++i) {
-		byte |= (dataBitStr[i] - '0') << bitsCount++;
+	for (int i = 0; i < str.size(); ++i) {
+		byte |= (str[i] - '0') << bitsCount++;
 
 		if (bitsCount >= 8) {
 			compressedBytes.push_back(byte);
@@ -43,13 +56,29 @@ void BitConcatenatorBeta::encodeBitString(const string& str) {
 void BitConcatenatorBeta::encodeBinary(int number) {
 	string bitStr = toBinary(number);
 	string bitsCountStr = toBinary(bitStr.size() - 1);
-
-	if (bitsCountStr.size() > 5) {
-		throw exception("Bits concatenation fialed");
-	}
-
+	
 	dataBitStr += bitStr;
-	dataSizesBitStr += bitsCountStr + string(5 - bitsCountStr.size(), '0');
+	dataSizesBitStr += bitsCountStr;
+
+	dataSizesLengths.push_back(bitStr.size());
+}
+
+void BitConcatenatorBeta::encodeMetaData() {
+	int cnt = 1;
+	int prv = dataSizesLengths.back();
+	for (int i = (int)dataSizesLengths.size() - 2; i >= 0; --i) {
+		if (prv == dataSizesLengths[i] && cnt < 31) {
+			++cnt;
+		}
+		else {
+			cnt |= (prv - 1) << 5;
+			compressedBytes.push_back(cnt);
+			cnt = 1;
+			prv = dataSizesLengths[i];
+		}
+	}
+	cnt |= (prv - 1) << 5;
+	compressedBytes.push_back(cnt);
 }
 
 // ==============================================================================

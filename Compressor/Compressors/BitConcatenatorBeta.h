@@ -1,6 +1,9 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <stack>
+
+#include "Huffman.h"
 using namespace std;
 
 typedef unsigned char uchar;
@@ -10,6 +13,8 @@ class BitConcatenatorBeta
 private:
 	string dataBitStr;
 	string dataSizesBitStr;
+
+	vector<uchar> dataSizesLengths;
 
 	vector<uchar> compressedBytes;
 	stack<int> dataSizes;
@@ -25,6 +30,8 @@ private:
 	void encodeBitString(const string& str);
 
 	void encodeBinary(int number);
+
+	void encodeMetaData();
 
 	// ==============================================================================
 	//

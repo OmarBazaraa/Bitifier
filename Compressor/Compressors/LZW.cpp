@@ -26,7 +26,7 @@ void LZW::encode(const vector<uchar>& data, vector<uchar>& outputData) {
 
 	result.push_back(encoderDictionary[pattern]);
 
-	BitConcatenator concat;
+	LZWBitConcatenator concat;
 	concat.concatenate(result, outputData);
 }
 

@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "LZWBitConcatenator.h"
 #include "BitConcatenator.h"
 using namespace std;
 
