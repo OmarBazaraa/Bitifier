@@ -21,7 +21,7 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	encodeAdvanced();
 
 	// Concatenate compressed data bits
-	LZWBitConcatenator concat;
+	BitConcatenator concat;
 	concat.concatenate(this->compressedData, this->concatenatedData);
 
 	// Encode compression meta-data
@@ -233,7 +233,7 @@ void Compressor::extract(vector<uchar>& compressedBytes, cv::Mat& outputImage) {
 	decodeMetaData();
 
 	// De-concatenate compressed data bits
-	LZWBitConcatenator concat;
+	BitConcatenator concat;
 	concat.deconcatenate(this->concatenatedData, this->compressedData);
 
 	// Decode image
