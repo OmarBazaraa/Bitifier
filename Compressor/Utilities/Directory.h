@@ -10,10 +10,12 @@ using namespace std;
 inline void getFilesInDirectory(const string& directory, vector<pair<string, string>>& files) {
 	// Make sure to change the following command to the corresponding
 	// one on your operating system when using Linux or MAC
-	string s = "dir " + directory + "b > dirs.txt";
+	string txtPath = "Data\\dirs.txt";
+
+	string s = "dir " + directory + "/b > " + txtPath;
 	system(s.c_str());
 
-	ifstream fin("dirs.txt");
+	ifstream fin(txtPath);
 
 	while (getline(fin, s)) {
 		int idx = (int)s.size() - 1;
@@ -21,5 +23,5 @@ inline void getFilesInDirectory(const string& directory, vector<pair<string, str
 		files.push_back({ s.substr(0, idx), s.substr(idx + 1) });
 	}
 
-	remove("dirs.txt");
+	remove(txtPath.c_str());
 }

@@ -1,14 +1,19 @@
+// STL libraries
 #include <iostream>
+#include <string>
 #include <ctime>
 #include <iomanip>
-#include "Directory.h"
-#include "Utility.h"
-#include "Compressor.h"
+
+// Custom libraries
+#include "Utilities\Directory.h"
+#include "Utilities\Utility.h"
+#include "Compressors\Compressor.h"
 using namespace std;
 
-#define PATH_SAMPLE_DATA        "DataSet/"
-#define PATH_COMPRESSED_DATA    "Compressed/"
-#define PATH_UNCOMPRESSED_DATA  "Uncompressed/"
+// Pathes
+#define PATH_SAMPLE_DATA        "Data\\Raw\\"
+#define PATH_COMPRESSED_DATA    "Data\\Compressed\\"
+#define PATH_UNCOMPRESSED_DATA  "Data\\Uncompressed\\"
 #define EXT_SAMPLE_FILE         "jpg"
 #define EXT_COMPRESSED_FILE     "cpr"
 

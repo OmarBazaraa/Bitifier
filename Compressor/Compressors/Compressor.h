@@ -14,6 +14,7 @@
 
 // Custom libraries
 #include "BitConcatenator.h"
+#include "BitConcatenatorBeta.h"
 #include "Huffman.h"
 #include "LZW.h"
 
