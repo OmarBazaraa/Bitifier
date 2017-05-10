@@ -1,8 +1,9 @@
 #pragma once
-#include <fstream>
+#include <iostream>
 #include <vector>
 #include <stack>
-#include <map>
+
+#include "Huffman.h"
 using namespace std;
 
 typedef unsigned char uchar;
@@ -10,39 +11,39 @@ typedef unsigned char uchar;
 class BitConcatenator
 {
 private:
-	int bytesIdx = 0;
-	int sizesIdx = 0;
-	vector<int> rawData;
-	vector<uchar> compressedData;
-	vector<int> compressedDataSizes;
+	string dataBitStr;
+	string dataSizesBitStr;
+
+	vector<uchar> dataSizesLengths;
+
+	vector<uchar> compressedBytes;
+	stack<int> dataSizes;
 
 	// ==============================================================================
 	//
 	// Concatenation functions
 	//
 public:
-	void concatenate(vector<int>& data, vector<uchar>& outputData);
+	void concatenate(const vector<int>& data, vector<uchar>& outputData);
 
 private:
-	void encodeData();
+	void encodeBitString(const string& str);
 
-	void encodeDataSizes();
+	void encodeBinary(int number);
 
-	void encodeToBase256(int number);
+	void encodeMetaData();
 
 	// ==============================================================================
 	//
 	// Deconcatenation functions
 	//
 public:
-	void deconcatenate(vector<uchar>& data, vector<int>& outputData);
+	void deconcatenate(const vector<uchar>& data, vector<int>& outputData);
 
 private:
-	void decodeData();
+	void decodeBitString(vector<int>& outputData);
 
 	void decodeDataSizes();
-
-	int decodeFromBase256();
 
 	// ==============================================================================
 	//

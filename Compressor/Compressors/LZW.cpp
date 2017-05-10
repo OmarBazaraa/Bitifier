@@ -7,6 +7,7 @@
 void LZW::encode(const vector<uchar>& data, vector<uchar>& outputData) {
 	initEncoderDictionary();
 
+	//
 	vector<int> result;
 	vector<uchar> pattern;
 
@@ -23,10 +24,10 @@ void LZW::encode(const vector<uchar>& data, vector<uchar>& outputData) {
 			pattern.push_back(data[i]);
 		}
 	}
-
 	result.push_back(encoderDictionary[pattern]);
 
-	LZWBitConcatenator concat;
+	//
+	ByteConcatenator concat;
 	concat.concatenate(result, outputData);
 }
 
@@ -47,17 +48,19 @@ void LZW::initEncoderDictionary() {
 // Decoding functions
 //
 
-void LZW::decode(vector<uchar>& data, vector<uchar>& outputData) {
+void LZW::decode(const vector<int>& data, vector<int>& outputData) {
 	initDecoderDictionary();
 
-	vector<int> result;
+	//
+	vector<int> tempData;
+	LZWBitConcatenator concat;
+	concat.deconcatenate(data, tempData);
+
+	vector<uchar> result;
 	vector<uchar> prv, entry;
 
-	BitConcatenator concat;
-	concat.deconcatenate(data, result);
-
-	for (int i = 0; i < result.size(); ++i) {
-		int code = result[i];
+	for (int i = 0; i < tempData.size(); ++i) {
+		int code = tempData[i];
 
 		if (code > decoderDictionary.size()) {
 			throw exception("LZW decoding failed");
@@ -76,8 +79,18 @@ void LZW::decode(vector<uchar>& data, vector<uchar>& outputData) {
 			prv.pop_back();
 		}
 
-		outputData.insert(outputData.end(), entry.begin(), entry.end());
+		result.insert(result.end(), entry.begin(), entry.end());
 		prv = entry;
+	}
+
+	// Convert uchar array to integer array
+	for (int i = 0; i < result.size(); ++i) {
+		if (i & 1) {
+			outputData.back() |= result[i];
+		}
+		else {
+			outputData.push_back(result[i] << 8);
+		}
 	}
 }
 

@@ -30,10 +30,10 @@ void Huffman::encode(const vector<uchar>& data, vector<uchar>& encodedData) {
 
 	if (bitsCount < 8) {
 		encodedData.push_back(byte);
-		encodedData.push_back(bitsCount);
+		encodedData.push_back(bitsCount);	// Number of bits to be ignored
 	}
 	else {
-		encodedData.push_back(0);
+		encodedData.push_back(0);			// Number of bits to be ignored
 	}
 }
 

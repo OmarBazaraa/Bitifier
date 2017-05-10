@@ -4,62 +4,36 @@
 // Concatenation functions
 //
 
-void LZWBitConcatenator::concatenate(vector<int>& data, vector<uchar>& outputData) {
+void LZWBitConcatenator::concatenate(const vector<int>& data, vector<uchar>& outputData) {
 	// Clear previous data
-	rawData.clear();
-	compressedData.clear();
-	compressedDataSizes.clear();
-
-	// 
-	data.swap(rawData);
+	dataBitStr.clear();
 
 	// Concatenate data
-	encodeData();
-	encodeDataSizes();
-
-	// Swap the two vectors to return concatenated data to function caller
-	outputData.swap(compressedData);
-}
-
-void LZWBitConcatenator::encodeData() {
-	for (int i = 0; i < rawData.size(); ++i) {
-		encodeToBase256(rawData[i]);
+	for (int i = 0; i < data.size(); ++i) {
+		string bitStr = toBinary(data[i]);
+		dataBitStr += bitStr + string(14 - (int)bitStr.size(), '0');
 	}
+
+	encodeBitString(dataBitStr, outputData);
 }
 
-void LZWBitConcatenator::encodeDataSizes() {
-	int cnt = 1;
-	int prv = compressedDataSizes.back();
-	for (int i = (int)compressedDataSizes.size() - 2; i >= 0; --i) {
-		if (prv == compressedDataSizes[i] && cnt < 127) {
-			++cnt;
-		}
-		else {
-			cnt |= (prv - 1) << 7;
-			compressedData.push_back(cnt);
-			cnt = 1;
-			prv = compressedDataSizes[i];
+void LZWBitConcatenator::encodeBitString(const string& str, vector<uchar>& outputData) {
+	int byte = 0;
+	int bitsCount = 0;
+
+	for (int i = 0; i < str.size(); ++i) {
+		byte |= (str[i] - '0') << bitsCount++;
+
+		if (bitsCount >= 8) {
+			outputData.push_back(byte);
+			byte = 0;
+			bitsCount = 0;
 		}
 	}
-	cnt |= (prv - 1) << 7;
-	compressedData.push_back(cnt);
-}
 
-void LZWBitConcatenator::encodeToBase256(int number) {
-	int cnt = 0;
-
-	if (number == 0) {
-		compressedData.push_back(number);
-		++cnt;
+	if (bitsCount > 0) {
+		outputData.push_back(byte);
 	}
-
-	while (number > 0) {
-		compressedData.push_back(number);
-		number >>= 8;	// divide 256
-		++cnt;
-	}
-
-	compressedDataSizes.push_back(cnt);
 }
 
 // ==============================================================================
@@ -67,61 +41,54 @@ void LZWBitConcatenator::encodeToBase256(int number) {
 // Deconcatenation functions
 //
 
-void LZWBitConcatenator::deconcatenate(vector<uchar>& data, vector<int>& outputData) {
+void LZWBitConcatenator::deconcatenate(const vector<int>& data, vector<int>& outputData) {
 	// Clear previous data
-	bytesIdx = sizesIdx = 0;
-	rawData.clear();
-	compressedData.clear();
-	compressedDataSizes.clear();
+	dataBitStr.clear();
 
-	// 
-	data.swap(compressedData);
+	// Concatenate data
+	for (int i = 0; i < data.size(); ++i) {
+		string bitStr = toBinary(data[i]);
+		dataBitStr += bitStr + string(32 - (int)bitStr.size(), '0');
+	}
 
-	// De-concatenate data
-	decodeDataSizes();
-	decodeData();
-
-	// Swap the two vectors to return concatenated data to function caller
-	outputData.swap(rawData);
+	decodeBitString(outputData);
 }
 
-void LZWBitConcatenator::decodeData() {
-	for (int i = 0; i < compressedDataSizes.size(); ++i) {
-		rawData.push_back(decodeFromBase256());
+void LZWBitConcatenator::decodeBitString(vector<int>& outputData) {
+	int l = 0;
+
+	while (l + 14 <= dataBitStr.size()) {
+		string& binary = dataBitStr.substr(l, 14);
+		l += 14;
+		outputData.push_back(toDecimal(binary));
 	}
 }
 
-void LZWBitConcatenator::decodeDataSizes() {
-	int bytesCnt = 0;
+// ==============================================================================
+//
+// Helper functions
+//
 
-	while (compressedData.size() > bytesCnt) {
-		uchar data = compressedData.back();
-		compressedData.pop_back();
-
-		int cnt = (data & 63);
-		int len = (data >> 6) + 1;
-		bytesCnt += cnt * len;
-
-		for (int i = 0; i < cnt; ++i) {
-			compressedDataSizes.push_back(len);
-		}
+string LZWBitConcatenator::toBinary(int number) {
+	if (number == 0) {
+		return "0";
 	}
 
-	if (compressedData.size() != bytesCnt) {
-		throw exception("Could not extract the given file");
+	string bitStr;
+
+	while (number > 0) {
+		bitStr += '0' + (number & 1);
+		number >>= 1;
 	}
+
+	return bitStr;
 }
 
-int LZWBitConcatenator::decodeFromBase256() {
-	int size = compressedDataSizes[sizesIdx++];
-	int idx = size + bytesIdx;
+int LZWBitConcatenator::toDecimal(string& binary) {
 	int num = 0;
 
-	bytesIdx += size;
-
-	while (size--) {
-		num <<= 8;
-		num |= compressedData[--idx];
+	for (int i = 0; i < binary.size(); ++i) {
+		num |= (binary[i] - '0') << i;
 	}
 
 	return num;

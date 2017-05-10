@@ -1,9 +1,11 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
 #include "LZWBitConcatenator.h"
 #include "BitConcatenator.h"
+#include "ByteConcatenator.h"
 using namespace std;
 
 typedef unsigned char uchar;
@@ -39,7 +41,7 @@ public:
 	/**
 	 *
 	 */
-	void decode(vector<uchar>& data, vector<uchar>& outputData);
+	void decode(const vector<int>& data, vector<int>& outputData);
 
 private:
 	/**

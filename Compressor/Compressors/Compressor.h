@@ -13,8 +13,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 // Custom libraries
-#include "BitConcatenator.h"
-#include "BitConcatenatorBeta.h"
+#include "ByteConcatenator.h"
 #include "Huffman.h"
 #include "LZW.h"
 

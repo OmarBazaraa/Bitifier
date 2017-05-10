@@ -1,8 +1,10 @@
 #pragma once
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <stack>
 #include <map>
+#include <algorithm>
 using namespace std;
 
 typedef unsigned char uchar;
@@ -10,37 +12,34 @@ typedef unsigned char uchar;
 class LZWBitConcatenator
 {
 private:
-	int bytesIdx = 0;
-	int sizesIdx = 0;
-	vector<int> rawData;
-	vector<uchar> compressedData;
-	vector<int> compressedDataSizes;
+	string dataBitStr;
 
 	// ==============================================================================
 	//
 	// Concatenation functions
 	//
 public:
-	void concatenate(vector<int>& data, vector<uchar>& outputData);
+	void concatenate(const vector<int>& data, vector<uchar>& outputData);
 
 private:
-	void encodeData();
-
-	void encodeDataSizes();
-
-	void encodeToBase256(int number);
+	void encodeBitString(const string& str, vector<uchar>& outputData);
 
 	// ==============================================================================
 	//
 	// Deconcatenation functions
 	//
 public:
-	void deconcatenate(vector<uchar>& data, vector<int>& outputData);
+	void deconcatenate(const vector<int>& data, vector<int>& outputData);
 
 private:
-	void decodeData();
+	void decodeBitString(vector<int>& outputData);
 
-	void decodeDataSizes();
+	// ==============================================================================
+	//
+	// Helper functions
+	//
+private:
+	string toBinary(int number);
 
-	int decodeFromBase256();
+	int toDecimal(string& binary);
 };
