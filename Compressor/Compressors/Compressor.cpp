@@ -47,9 +47,14 @@ void Compressor::encodeAdvanced() {
 }
 
 void Compressor::encodeDistinctShapes() {
+	ofstream fout("data.txt");
+	map<int, int> frq;
+
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
+		int l = compressedData.size();
+
 		encodeRunLength(shapes[i]);
 
 		// Encode indecies of blocks refering to the i-th shape in relative order
@@ -58,7 +63,17 @@ void Compressor::encodeDistinctShapes() {
 			compressedData.push_back(shapeBlocks[i][j] - prv);
 			prv = shapeBlocks[i][j];
 		}
+
+		for (int k = l + 2; k < compressedData.size(); ++k) {
+			++frq[compressedData[k]];
+		}
 	}
+
+	for (auto it : frq) {
+		fout << it.first << '\t' << it.second << endl;
+	}
+
+	fout.close();
 }
 
 void Compressor::encodeImageBlocks() {
@@ -146,6 +161,9 @@ int Compressor::storeUniqueShape(const cv::Mat& shape) {
 		if (countNonZero(shape ^ shapes[i]) == 0)
 			return i;
 	}
+
+	//string dir = "Data\\Shapes\\" + to_string(shapes.size()) + ".jpg";
+	//imwrite(dir, shape);
 	
 	shapes.push_back(shape);
 	return (int)shapes.size() - 1;

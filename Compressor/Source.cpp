@@ -42,7 +42,7 @@ int main() {
 		// Read files info
 		getFilesInDirectory(PATH_SAMPLE_DATA, files);
 
-		for (int i = 0; i < files.size(); ++i) {
+		for (int i = 3; i < 4; ++i) {
 			// If file is not of type .jpg then skip it
 			if (files[i].second != EXT_SAMPLE_FILE) {
 				continue;
@@ -76,7 +76,7 @@ int main() {
 			
 			// ======================================================================
 
-			///*
+			/*
 			// Loading file
 			cout << "Loading compressed file..." << endl;
 			loadFile(cpr, compressedBytes);
@@ -95,7 +95,7 @@ int main() {
 				cout << "Lossy compression!" << endl;
 				return 0;
 			}
-			//*/
+			*/
 
 			cout << "Compression ratio: " << (double)orgSize / comSize << endl;
 			cout << "------------------------------------" << endl << endl;
