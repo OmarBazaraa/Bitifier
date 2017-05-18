@@ -24,7 +24,7 @@ public:
 	/**
 	 *
 	 */
-	void encode(const vector<uchar>& data, vector<uchar>& outputData);
+	void encode(const vector<uchar>& data, vector<int>& outputData);
 
 private:
 	/**

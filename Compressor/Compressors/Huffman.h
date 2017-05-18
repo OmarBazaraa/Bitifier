@@ -1,29 +1,32 @@
 #pragma once
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <bitset>
 #include <map>
 #include <set>
+#include "ByteConcatenator.h"
 using namespace std;
 
 typedef unsigned char uchar;
 
+/**
+ * Node structure needed to build Huffman tree
+ */
+struct SymbolNode {
+	uchar symbol;
+	SymbolNode* left = NULL;
+	SymbolNode* right = NULL;
+};
+
 class Huffman
 {
-	/**
-	 * Node structure needed to build Huffman tree
-	 */
-	struct Node {
-		uchar symbol;
-		Node* left = NULL;
-		Node* right = NULL;
-		int frequency = 0;
-	};
-
 private:
+	const int ALPHA_SIZE = 256;
+
 	int dataIdx;
 	string encodedData;
+	vector<int> symbolsFrq;
 	map<uchar, string> codeTable;
 	map<string, uchar> codeTableInverse;
 
@@ -41,9 +44,7 @@ public:
 private:
 	void encodeCodeTable(vector<uchar>& encodedData);
 
-	void buildCodeTable(const vector<uchar>& data);
-
-	void traverseTree(Node* node, string code = "");
+	void encodeSymbols(vector<uchar>& encodedData);
 
 	// ==============================================================================
 	//
@@ -59,13 +60,19 @@ public:
 private:
 	void decodeCodeTable(const vector<uchar>& data);
 
+	void decodeSymbols(const vector<uchar>& data);
+
 	//
 	// Helper functions
 	//
 private:
+	void buildCodeTable();
+
+	void traverseTree(SymbolNode* node, string code = "");
+
 	string byteToBinaryString(uchar byte);
 
 	void printCodeTable(string path);
 
-	void deleteTree(Node* node);
+	void deleteTree(SymbolNode* node);
 };

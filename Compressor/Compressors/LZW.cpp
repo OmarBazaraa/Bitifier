@@ -4,11 +4,10 @@
 // Encoding functions
 //
 
-void LZW::encode(const vector<uchar>& data, vector<uchar>& outputData) {
+void LZW::encode(const vector<uchar>& data, vector<int>& outputData) {
 	initEncoderDictionary();
 
 	//
-	vector<int> result;
 	vector<uchar> pattern;
 
 	for (int i = 0; i < data.size(); ++i) {
@@ -18,17 +17,13 @@ void LZW::encode(const vector<uchar>& data, vector<uchar>& outputData) {
 			encoderDictionary[pattern] = encoderDictionary.size();
 
 			pattern.pop_back();
-			result.push_back(encoderDictionary[pattern]);
+			outputData.push_back(encoderDictionary[pattern]);
 
 			pattern.clear();
 			pattern.push_back(data[i]);
 		}
 	}
-	result.push_back(encoderDictionary[pattern]);
-
-	//
-	ByteConcatenator concat;
-	concat.concatenate(result, outputData);
+	outputData.push_back(encoderDictionary[pattern]);
 }
 
 void LZW::initEncoderDictionary() {

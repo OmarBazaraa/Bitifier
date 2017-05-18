@@ -8,8 +8,15 @@ void Huffman::encode(const vector<uchar>& data, vector<uchar>& encodedData) {
 	if (data.empty())
 		return;
 
-	buildCodeTable(data);
-	encodeCodeTable(encodedData);
+	// Count the frequency of each symbol in the given data
+	symbolsFrq.resize(ALPHA_SIZE);
+	for (int i = 0; i < data.size(); ++i) {
+		++symbolsFrq[data[i]];
+	}
+
+	buildCodeTable();
+	//encodeCodeTable(encodedData);
+	encodeSymbols(encodedData);
 
 	uchar byte = 0;
 	int bitsCount = 8;
@@ -37,6 +44,7 @@ void Huffman::encode(const vector<uchar>& data, vector<uchar>& encodedData) {
 	}
 }
 
+// [deprecated, encodeSymbols is used instead]
 void Huffman::encodeCodeTable(vector<uchar>& encodedData) {
 	// Encode number of distinct symbols
 	encodedData.push_back(codeTable.size() - 1);
@@ -70,62 +78,20 @@ void Huffman::encodeCodeTable(vector<uchar>& encodedData) {
 	}
 }
 
-void Huffman::buildCodeTable(const vector<uchar>& data) {
-	// Count the frequency of each symbol in the given data
-	map<uchar, int> frq;
-	for (int i = 0; i < data.size(); ++i) {
-		++frq[data[i]];
+void Huffman::encodeSymbols(vector<uchar>& encodedData) {
+	ByteConcatenator concat;
+	vector<uchar> metaData;
+	concat.concatenate(symbolsFrq, metaData);
+
+	int n = metaData.size();
+
+	if (n >= 1 << 16) {
+		throw exception("Cannot encode Huffman meta-data");
 	}
 
-	// Populate symbols multiset sorted in non-decreasing order
-	multiset<pair<int, Node*>> symbols;
-	for (auto it : frq) {
-		Node* n = new Node();
-		n->symbol = it.first;
-		symbols.insert({ it.second, n });
-	}
-
-	// Build the tree
-	while (symbols.size() > 1) {
-		int freq = 0;
-		Node* n = new Node();
-
-		//
-		// Combine the least frequent two nodes into one node
-		//
-		// First node
-		freq += symbols.begin()->first;
-		n->left = symbols.begin()->second;
-		symbols.erase(symbols.begin());
-		// Second node
-		freq += symbols.begin()->first;
-		n->right = symbols.begin()->second;
-		symbols.erase(symbols.begin());
-
-		// Insert the combined node
-		symbols.insert({ freq, n });
-	}
-
-	// Traverse the tree to generate the code table
-	if (symbols.size() == 1) {
-		Node* root = symbols.begin()->second;
-		traverseTree(root);
-		deleteTree(root);
-	}
-}
-
-void Huffman::traverseTree(Node* node, string code) {
-	if (node->left != NULL) {
-		traverseTree(node->left, code + "0");
-	}
-	if (node->right != NULL) {
-		traverseTree(node->right, code + "1");
-	}
-
-	// If the current node is a leaf node then insert its code into the table
-	if (node->left == NULL && node->left == NULL) {
-		codeTable.insert({ node->symbol, code });
-	}
+	encodedData.push_back(n);
+	encodedData.push_back(n >> 8);
+	encodedData.insert(encodedData.end(), metaData.begin(), metaData.end());
 }
 
 // ==============================================================================
@@ -134,7 +100,9 @@ void Huffman::traverseTree(Node* node, string code) {
 //
 
 void Huffman::decode(const vector<uchar>& data, vector<uchar>& decodedData) {
-	decodeCodeTable(data);
+	decodeSymbols(data);
+	//decodeCodeTable(data);
+	buildCodeTable();
 
 	// Convert data to binary string
 	string binaryStr;
@@ -156,6 +124,7 @@ void Huffman::decode(const vector<uchar>& data, vector<uchar>& decodedData) {
 	}
 }
 
+// [deprecated, decodeSymbols is used instead]
 void Huffman::decodeCodeTable(const vector<uchar>& data) {
 	dataIdx = -1;
 
@@ -189,10 +158,76 @@ void Huffman::decodeCodeTable(const vector<uchar>& data) {
 	}
 }
 
+void Huffman::decodeSymbols(const vector<uchar>& data) {
+	int n = 2;
+	n += data[0];
+	n += data[1] << 8;
+
+	dataIdx = n - 1;
+
+	ByteConcatenator concat;
+	vector<uchar> metaData(data.begin() + 2, data.begin() + n);
+	concat.deconcatenate(metaData, symbolsFrq);
+}
+
 // ==============================================================================
 //
 // Helper functions
 //
+
+void Huffman::buildCodeTable() {
+	// Populate symbols multiset sorted in non-decreasing order
+	multiset<pair<int, SymbolNode*>> symbols;
+	for (int i = 0; i < ALPHA_SIZE; ++i) {
+		if (symbolsFrq[i] == 0) continue;
+		SymbolNode* n = new SymbolNode();
+		n->symbol = i;
+		symbols.insert({ symbolsFrq[i], n });
+	}
+
+	// Build the tree
+	while (symbols.size() > 1) {
+		int freq = 0;
+		SymbolNode* n = new SymbolNode();
+
+		//
+		// Combine the least frequent two nodes into one node
+		//
+		// First node
+		freq += symbols.begin()->first;
+		n->left = symbols.begin()->second;
+		symbols.erase(symbols.begin());
+		// Second node
+		freq += symbols.begin()->first;
+		n->right = symbols.begin()->second;
+		symbols.erase(symbols.begin());
+
+		// Insert the combined node
+		symbols.insert({ freq, n });
+	}
+
+	// Traverse the tree to generate the code table
+	if (symbols.size() == 1) {
+		SymbolNode* root = symbols.begin()->second;
+		traverseTree(root);
+		deleteTree(root);
+	}
+}
+
+void Huffman::traverseTree(SymbolNode* node, string code) {
+	if (node->left != NULL) {
+		traverseTree(node->left, code + "0");
+	}
+	if (node->right != NULL) {
+		traverseTree(node->right, code + "1");
+	}
+
+	// If the current node is a leaf node then insert its code into the table
+	if (node->left == NULL && node->left == NULL) {
+		codeTable.insert({ node->symbol, code });
+		codeTableInverse.insert({ code, node->symbol });
+	}
+}
 
 string Huffman::byteToBinaryString(uchar byte) {
 	string result;
@@ -212,11 +247,15 @@ void Huffman::printCodeTable(string path) {
 	fout.close();
 }
 
-void Huffman::deleteTree(Node* node) {
+void Huffman::deleteTree(SymbolNode* node) {
 	if (node == NULL)
 		return;
 
 	deleteTree(node->left);
 	deleteTree(node->right);
 	delete node;
+}
+
+bool operator<(const pair<int, SymbolNode*>& lhs, const pair<int, SymbolNode*> rhs) {
+	return lhs.first < rhs.first;
 }
