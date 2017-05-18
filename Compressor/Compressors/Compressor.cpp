@@ -27,9 +27,13 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	// Encode compression meta-data
 	encodeMetaData();
 
-	// Encode the compressed image using Huffman encoding algorithm
-	Huffman huffman;
-	huffman.encode(this->concatenatedData, outputBytes);
+	//// Encode the compressed image using Huffman encoding algorithm
+	//Huffman huffman;
+	//huffman.encode(this->concatenatedData, outputBytes);
+
+	//
+	ArithmeticCoder coder;
+	coder.encode(this->concatenatedData, outputBytes);
 }
 
 void Compressor::encodeAdvanced() {
@@ -47,8 +51,8 @@ void Compressor::encodeAdvanced() {
 }
 
 void Compressor::encodeDistinctShapes() {
-	ofstream fout("data.txt");
-	map<int, int> frq;
+	//ofstream fout("data.txt");
+	//map<int, int> frq;
 
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
@@ -64,16 +68,16 @@ void Compressor::encodeDistinctShapes() {
 			prv = shapeBlocks[i][j];
 		}
 
-		for (int k = l + 2; k < compressedData.size(); ++k) {
+		/*for (int k = l + 2; k < compressedData.size(); ++k) {
 			++frq[compressedData[k]];
-		}
+		}*/
 	}
 
-	for (auto it : frq) {
+	/*for (auto it : frq) {
 		fout << it.first << '\t' << it.second << endl;
 	}
 
-	fout.close();
+	fout.close();*/
 }
 
 void Compressor::encodeImageBlocks() {

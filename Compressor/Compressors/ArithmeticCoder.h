@@ -16,7 +16,7 @@ private:
 	const int ALPHA_SIZE = 256;
 
 	int dataIdx;
-	string encodedData;
+	string binaryStr;
 	vector<int> symbolsFrq;
 	vector<int> symbolsFrqPrefixSum;
 
@@ -34,6 +34,8 @@ public:
 private:
 
 	void encodeSymbols(vector<uchar>& encodedData);
+
+	void _encode(const vector<uchar>& data);
 
 	// ==============================================================================
 	//
