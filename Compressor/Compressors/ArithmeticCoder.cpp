@@ -14,7 +14,7 @@ void ArithmeticCoder::encode(const vector<uchar>& data, vector<uchar>& encodedDa
 		++symbolsFrq[data[i]];
 	}
 
-	//encodeSymbols(encodedData);
+	encodeSymbols(encodedData);
 
 	// Calculate the prefix sum of symbols frequencies
 	symbolsFrqPrefixSum.resize(ALPHA_SIZE + 1);

@@ -76,6 +76,13 @@ private:
 	void encodeRunLength(const cv::Mat& img);
 
 	/**
+	 * 
+	 */
+	void encodeShape(const cv::Mat& img);
+
+	int detectSquare(const cv::Mat& img, cv::Mat& visited, int upperLeftCorner);
+
+	/**
 	 * Encode meta-data needed in decompression process
 	 */
 	void encodeMetaData();
