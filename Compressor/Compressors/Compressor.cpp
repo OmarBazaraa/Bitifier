@@ -125,7 +125,6 @@ void Compressor::encodeShape(const cv::Mat& img) {
 	cv::Mat visited = cv::Mat::zeros(img.rows, img.cols, CV_8U);
 
 	// Store image pixels
-	vector<int> temp;
 	for (int i = 0; i < img.rows; ++i) {
 		for (int j = 0; j < img.cols; ++j) {
 			if (img.at<uchar>(i, j) == blockColor || visited.at<bool>(i, j)) {
@@ -135,8 +134,8 @@ void Compressor::encodeShape(const cv::Mat& img) {
 			int upperLeftCorner = i * img.cols + j;
 			int lowerRightCorner = detectSquare(img, visited, upperLeftCorner);
 
-			temp.push_back(upperLeftCorner);
-			temp.push_back(lowerRightCorner - upperLeftCorner);
+			compressedData.push_back(upperLeftCorner);
+			compressedData.push_back(lowerRightCorner - upperLeftCorner);
 		}
 	}
 }
@@ -150,7 +149,7 @@ int Compressor::detectSquare(const cv::Mat& img, cv::Mat& visited, int upperLeft
 
 	// Get right border of the square
 	while (endCol < img.cols) {
-		if (img.at<uchar>(startRow, endCol) == blockColor) {
+		if (img.at<uchar>(startRow, endCol) == blockColor || visited.at<bool>(startRow, endCol)) {
 			break;
 		}
 
@@ -176,16 +175,12 @@ int Compressor::detectSquare(const cv::Mat& img, cv::Mat& visited, int upperLeft
 	// Mark the square as visited
 	for (int i = startRow; i < endRow; ++i) {
 		for (int j = startCol; j < endCol; ++j) {
-			// Set current pixel as visisted
 			visited.at<bool>(i, j) = true;
 		}
 	}
 
-	--endRow;
-	--endCol;
-
 	// Return lower right corner of the square
-	return endRow * img.cols + endCol;
+	return --endRow * img.cols + --endCol;
 }
 
 void Compressor::encodeMetaData() {
