@@ -16,7 +16,6 @@
 #include "ByteConcatenator.h"
 #include "Huffman.h"
 #include "ArithmeticCoder.h"
-#include "LZW.h"
 
 using namespace cv;
 using namespace std;
@@ -74,13 +73,6 @@ private:
 	 * Encode the given image using run length encoding algorithm
 	 */
 	void encodeRunLength(const cv::Mat& img);
-
-	/**
-	 * 
-	 */
-	void encodeShape(const cv::Mat& img);
-
-	int detectSquare(const cv::Mat& img, cv::Mat& visited, int upperLeftCorner);
 
 	/**
 	 * Encode meta-data needed in decompression process

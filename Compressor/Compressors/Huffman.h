@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include "ByteConcatenator.h"
+#include "BitConcatenator.h"
 using namespace std;
 
 typedef unsigned char uchar;
@@ -42,6 +43,7 @@ public:
 	void encode(const vector<uchar>& data, vector<uchar>& encodedData);
 
 private:
+	// [deprecated, encodeSymbols is used instead]
 	void encodeCodeTable(vector<uchar>& encodedData);
 
 	void encodeSymbols(vector<uchar>& encodedData);
@@ -58,6 +60,7 @@ public:
 	void decode(const vector<uchar>& data, vector<uchar>& decodedData);
 
 private:
+	// [deprecated, decodeSymbols is used instead]
 	void decodeCodeTable(const vector<uchar>& data);
 
 	void decodeSymbols(const vector<uchar>& data);

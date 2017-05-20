@@ -79,13 +79,14 @@ void Huffman::encodeCodeTable(vector<uchar>& encodedData) {
 }
 
 void Huffman::encodeSymbols(vector<uchar>& encodedData) {
-	ByteConcatenator concat;
+	BitConcatenator concat;
 	vector<uchar> metaData;
 	concat.concatenate(symbolsFrq, metaData);
 
 	int n = metaData.size();
 
 	if (n >= 1 << 16) {
+		// Should never happens in "int" limit
 		throw exception("Cannot encode Huffman meta-data");
 	}
 
@@ -109,8 +110,8 @@ void Huffman::decode(const vector<uchar>& data, vector<uchar>& decodedData) {
 	while (dataIdx + 2 < data.size()) {
 		binaryStr += byteToBinaryString(data[++dataIdx]);
 	}
-	int ingnoreCount = data.back();
-	binaryStr.erase(binaryStr.size() - ingnoreCount, binaryStr.size());
+	int ignoreCount = data.back();
+	binaryStr.erase(binaryStr.size() - ignoreCount, binaryStr.size());
 
 	// Detect code words and map them to their corresponding symbol
 	string code;
@@ -165,7 +166,7 @@ void Huffman::decodeSymbols(const vector<uchar>& data) {
 
 	dataIdx = n - 1;
 
-	ByteConcatenator concat;
+	BitConcatenator concat;
 	vector<uchar> metaData(data.begin() + 2, data.begin() + n);
 	concat.deconcatenate(metaData, symbolsFrq);
 }
