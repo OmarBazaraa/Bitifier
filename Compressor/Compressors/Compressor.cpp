@@ -24,16 +24,13 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	ByteConcatenator concat;
 	concat.concatenate(this->compressedData, this->concatenatedData);
 
+	// TODO: only use huffman encoding when it perform better
 	// Encode compression meta-data
 	encodeMetaData();
 
 	// Encode the compressed image using Huffman encoding algorithm
 	Huffman huffman;
 	huffman.encode(this->concatenatedData, outputBytes);
-
-	////
-	//ArithmeticCoder coder;
-	//coder.encode(this->concatenatedData, outputBytes);
 }
 
 void Compressor::encodeAdvanced() {
@@ -151,9 +148,6 @@ int Compressor::storeUniqueShape(const cv::Mat& shape) {
 			return i;
 	}
 
-	//string dir = "Data\\Shapes\\" + to_string(shapes.size()) + ".jpg";
-	//imwrite(dir, shape);
-	
 	shapes.push_back(shape);
 	return (int)shapes.size() - 1;
 }

@@ -15,7 +15,6 @@
 // Custom libraries
 #include "ByteConcatenator.h"
 #include "Huffman.h"
-#include "ArithmeticCoder.h"
 
 using namespace cv;
 using namespace std;
