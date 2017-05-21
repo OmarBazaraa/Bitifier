@@ -46,6 +46,7 @@ private:
 	const int RUN_LENGTH_HOR = 0;
 	const int RUN_LENGTH_VER = 1;
 	const int RUN_LENGTH_SPIRAL = 2;
+	const int RUN_LENGTH_ZIGZAG = 3;
 
 	// ==============================================================================
 	//
@@ -87,6 +88,11 @@ private:
 	 * Encode the given image using run length encoding algorithm in spiral mannar
 	 */
 	void encodeRunLengthSpiral(const cv::Mat& img, vector<int>& encodedData);
+
+	/**
+	 * Encode the given image using run length encoding algorithm in zig-zag mannar
+	 */
+	void encodeRunLengthZigZag(const cv::Mat& img, vector<int>& encodedData);
 
 	/**
 	 * Encode meta-data needed in decompression process

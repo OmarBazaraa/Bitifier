@@ -8,6 +8,7 @@
 #include "Utilities\Directory.h"
 #include "Utilities\Utility.h"
 #include "Compressors\Compressor.h"
+#include "Compressors\Beta\ArithmeticCoder.h"
 using namespace std;
 
 // Pathes
@@ -37,6 +38,14 @@ int main() {
 	vector<pair<string, string>> files;
 
 	cout << fixed << setprecision(3);
+
+	/*vector<uchar> vec, temp;
+	loadFile("out.txt", vec);
+	ArithmeticCoder coder;
+	coder.encode(vec, temp);
+	cout << vec.size() << endl;
+	cout << temp.size() << endl;
+	return 0;*/
 
 	try {
 		// Read files info

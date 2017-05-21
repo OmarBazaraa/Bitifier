@@ -168,10 +168,10 @@ void Compressor::encodeRunLengthSpiral(const cv::Mat& img, vector<int>& encodedD
 	encodedData.push_back(img.cols);
 
 	// Store image pixels
-	int i = 0, j = 0;
+	int i = 0, j = img.cols - 1;
 	int up = 0, down = img.rows - 1, left = 0, right = img.cols - 1;
 	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
-	int dir = 0;
+	int dir = 1;
 	int dR[4] = { 0, 1, 0, -1 };
 	int dC[4] = { 1, 0, -1, 0 };
 	int runCnt = 0;
@@ -211,6 +211,41 @@ void Compressor::encodeRunLengthSpiral(const cv::Mat& img, vector<int>& encodedD
 
 		i += dR[dir];
 		j += dC[dir];
+	}
+
+	encodedData.push_back(runCnt);
+}
+
+void Compressor::encodeRunLengthZigZag(const cv::Mat& img, vector<int>& encodedData) {
+	// Store image rows & cols count
+	encodedData.push_back(img.rows);
+	encodedData.push_back(img.cols);
+
+	// Store image pixels
+	int i = 0, j = 0;
+	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
+	int dir = 0;
+	int dR[4] = { 0, 1, 0, -1 };
+	int dC[4] = { 1, 0, -1, 0 };
+	int runCnt = 0;
+	bool pixel, prvColor = true;
+
+	while (cellsVisCount++ < cellsCount) {
+		pixel = (img.at<uchar>(i, j) == dominantColor);
+
+		if (prvColor == pixel) {
+			++runCnt;
+		}
+		else {
+			encodedData.push_back(runCnt);
+			runCnt = 1;
+			prvColor = pixel;
+		}
+
+		int toR = i + dR[dir];
+		int toC = j + dC[dir];
+
+		
 	}
 
 	encodedData.push_back(runCnt);
@@ -496,10 +531,10 @@ void Compressor::decodeRunLengthSpiral(cv::Mat& img) {
 	// Retrieve image pixels
 	img = cv::Mat(rows, cols, CV_8U);
 	
-	int i = 0, j = 0;
+	int i = 0, j = img.cols - 1;
 	int up = 0, down = img.rows - 1, left = 0, right = img.cols - 1;
 	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
-	int dir = 0;
+	int dir = 1;
 	int dR[4] = { 0, 1, 0, -1 };
 	int dC[4] = { 1, 0, -1, 0 };
 	int runCnt = 0;
