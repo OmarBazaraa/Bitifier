@@ -47,9 +47,14 @@ void Compressor::encodeAdvanced() {
 }
 
 void Compressor::encodeDistinctShapes() {
+	vector<int> encodedShapes, encodedShapesType;
+
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
+		//
+		// Try different run length encoding tequnices and pick the better one
+		//
 		vector<int> horRL, verRL, spiralRL;
 
 		encodeRunLengthHorizontal(shapes[i], horRL);
@@ -57,25 +62,45 @@ void Compressor::encodeDistinctShapes() {
 		encodeRunLengthSpiral(shapes[i], spiralRL);
 		
 		if (spiralRL.size() < horRL.size() && spiralRL.size() < verRL.size()) {
-			compressedData.push_back(2);
-			compressedData.insert(compressedData.end(), spiralRL.begin(), spiralRL.end());
+			encodedShapesType.push_back(RUN_LENGTH_SPIRAL);
+			encodedShapes.insert(encodedShapes.end(), spiralRL.begin(), spiralRL.end());
 		}
 		else if (verRL.size() < horRL.size()) {
-			compressedData.push_back(1);
-			compressedData.insert(compressedData.end(), verRL.begin(), verRL.end());
+			encodedShapesType.push_back(RUN_LENGTH_VER);
+			encodedShapes.insert(encodedShapes.end(), verRL.begin(), verRL.end());
 		}
 		else {
-			compressedData.push_back(0);
-			compressedData.insert(compressedData.end(), horRL.begin(), horRL.end());
+			encodedShapesType.push_back(RUN_LENGTH_HOR);
+			encodedShapes.insert(encodedShapes.end(), horRL.begin(), horRL.end());
 		}
 		
 		// Encode indecies of blocks refering to the i-th shape in relative order
-		compressedData.push_back(shapeBlocks[i].size());
+		encodedShapes.push_back(shapeBlocks[i].size());
 		for (int j = 0, prv = 0; j < shapeBlocks[i].size(); ++j) {
-			compressedData.push_back(shapeBlocks[i][j] - prv);
+			encodedShapes.push_back(shapeBlocks[i][j] - prv);
 			prv = shapeBlocks[i][j];
 		}
 	}
+
+	// Encode the id of the used tequnice
+	int bitsCount = 0;
+	int data = 0;
+	for (int x : encodedShapesType) {
+		data |= (x << bitsCount);
+		bitsCount += 2;
+
+		if (bitsCount >= 4) {
+			compressedData.push_back(data);
+			bitsCount = 0;
+			data = 0;
+		}
+	}
+	if (bitsCount > 0) {
+		compressedData.push_back(data);
+	}
+
+	// Insert encoded shapes
+	compressedData.insert(compressedData.end(), encodedShapes.begin(), encodedShapes.end());
 }
 
 void Compressor::encodeImageBlocks() {
@@ -351,15 +376,24 @@ void Compressor::decodeDistinctShapes() {
 	shapes.resize(shapesCount);
 	shapeBlocks.resize(shapesCount);
 
+	// Retrieve shapes encoding type
+	int typeBytesCount = (shapesCount + 1) / 2;
+	vector<int> shapesEncodingType;
+	for (int i = 0; i < typeBytesCount; ++i) {
+		int type = compressedData[dataIdx++];
+		shapesEncodingType.push_back(type & 3);
+		shapesEncodingType.push_back((type >> 2) & 3);
+	}
+
 	// Retrieve image distinct shapes
 	for (int i = 0; i < shapesCount; ++i) {
-		int decodeType = compressedData[dataIdx++];
+		int type = shapesEncodingType[i];
 
-		if (decodeType == 0)
+		if (type == RUN_LENGTH_HOR)
 			decodeRunLengthHorizontal(shapes[i]);
-		else if (decodeType == 1)
+		else if (type == RUN_LENGTH_VER)
 			decodeRunLengthVertical(shapes[i]);
-		else if (decodeType == 2)
+		else if (type == RUN_LENGTH_SPIRAL)
 			decodeRunLengthSpiral(shapes[i]);
 		
 		// Retrieve shape's refering blocks

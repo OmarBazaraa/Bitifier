@@ -42,6 +42,11 @@ private:
 	int dirC[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 	int minRow, minCol, maxRow, maxCol;
 
+	// Run-Length encoding types
+	const int RUN_LENGTH_HOR = 0;
+	const int RUN_LENGTH_VER = 1;
+	const int RUN_LENGTH_SPIRAL = 2;
+
 	// ==============================================================================
 	//
 	// Compression functions
