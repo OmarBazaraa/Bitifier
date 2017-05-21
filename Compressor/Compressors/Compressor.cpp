@@ -47,7 +47,7 @@ void Compressor::encodeAdvanced() {
 }
 
 void Compressor::encodeDistinctShapes() {
-	vector<int> encodedShapes, encodedShapesType;
+	vector<int> encodedShapes;
 
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
@@ -55,6 +55,7 @@ void Compressor::encodeDistinctShapes() {
 		//
 		// Try different run length encoding tequnices and pick the better one
 		//
+		int type;
 		vector<int> horRL, verRL, spiralRL;
 
 		encodeRunLengthHorizontal(shapes[i], horRL);
@@ -62,17 +63,22 @@ void Compressor::encodeDistinctShapes() {
 		encodeRunLengthSpiral(shapes[i], spiralRL);
 		
 		if (spiralRL.size() < horRL.size() && spiralRL.size() < verRL.size()) {
-			encodedShapesType.push_back(RUN_LENGTH_SPIRAL);
+			type = RUN_LENGTH_SPIRAL;
 			encodedShapes.insert(encodedShapes.end(), spiralRL.begin(), spiralRL.end());
 		}
 		else if (verRL.size() < horRL.size()) {
-			encodedShapesType.push_back(RUN_LENGTH_VER);
+			type = RUN_LENGTH_VER;
 			encodedShapes.insert(encodedShapes.end(), verRL.begin(), verRL.end());
 		}
 		else {
-			encodedShapesType.push_back(RUN_LENGTH_HOR);
+			type = RUN_LENGTH_HOR;
 			encodedShapes.insert(encodedShapes.end(), horRL.begin(), horRL.end());
 		}
+
+		if (i & 1)
+			compressedData.back() |= type << 2;
+		else
+			compressedData.push_back(type);
 		
 		// Encode indecies of blocks refering to the i-th shape in relative order
 		encodedShapes.push_back(shapeBlocks[i].size());
@@ -80,23 +86,6 @@ void Compressor::encodeDistinctShapes() {
 			encodedShapes.push_back(shapeBlocks[i][j] - prv);
 			prv = shapeBlocks[i][j];
 		}
-	}
-
-	// Encode the id of the used tequnice
-	int bitsCount = 0;
-	int data = 0;
-	for (int x : encodedShapesType) {
-		data |= (x << bitsCount);
-		bitsCount += 2;
-
-		if (bitsCount >= 4) {
-			compressedData.push_back(data);
-			bitsCount = 0;
-			data = 0;
-		}
-	}
-	if (bitsCount > 0) {
-		compressedData.push_back(data);
 	}
 
 	// Insert encoded shapes
