@@ -24,7 +24,6 @@ void Compressor::compress(const cv::Mat& imageMat, vector<uchar>& outputBytes) {
 	ByteConcatenator concat;
 	concat.concatenate(this->compressedData, this->concatenatedData);
 
-	// TODO: only use huffman encoding when it perform better
 	// Encode compression meta-data
 	encodeMetaData();
 
@@ -51,8 +50,25 @@ void Compressor::encodeDistinctShapes() {
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
-		encodeRunLength(shapes[i], compressedData);
+		vector<int> horRL, verRL, spiralRL;
 
+		encodeRunLengthHorizontal(shapes[i], horRL);
+		encodeRunLengthVertical(shapes[i], verRL);
+		encodeRunLengthSpiral(shapes[i], spiralRL);
+		
+		if (spiralRL.size() < horRL.size() && spiralRL.size() < verRL.size()) {
+			compressedData.push_back(2);
+			compressedData.insert(compressedData.end(), spiralRL.begin(), spiralRL.end());
+		}
+		else if (verRL.size() < horRL.size()) {
+			compressedData.push_back(1);
+			compressedData.insert(compressedData.end(), verRL.begin(), verRL.end());
+		}
+		else {
+			compressedData.push_back(0);
+			compressedData.insert(compressedData.end(), horRL.begin(), horRL.end());
+		}
+		
 		// Encode indecies of blocks refering to the i-th shape in relative order
 		compressedData.push_back(shapeBlocks[i].size());
 		for (int j = 0, prv = 0; j < shapeBlocks[i].size(); ++j) {
@@ -66,33 +82,124 @@ void Compressor::encodeImageBlocks() {
 	// Encode image blocks starting pixels (upper left pixels)
 	for (int i = 0, prv = 0; i < imageBlocks.size(); ++i) {
 		compressedData.push_back(imageBlocks[i].first - prv);
-		prv = imageBlocks[i].first;
+		prv = imageBlocks[i].first;// +shapes[imageBlocks[i].second].cols / 1.65;
 	}
 }
 
-void Compressor::encodeRunLength(const cv::Mat& img, vector<int>& encodedData) {
+void Compressor::encodeRunLengthHorizontal(const cv::Mat& img, vector<int>& encodedData) {
 	// Store image rows & cols count
 	encodedData.push_back(img.rows);
 	encodedData.push_back(img.cols);
 
 	// Store image pixels
-	int cnt = 0;
-	bool pixel, prv = true;
+	int dir = 1;
+	int initVal = 0;
+	int runCnt = 0;
+	bool pixel, prvColor = true;
+
 	for (int i = 0; i < img.rows; ++i) {
-		for (int j = 0; j < img.cols; ++j) {
+		for (int j = initVal; j >= 0 && j < img.cols; j += dir) {
 			pixel = (img.at<uchar>(i, j) == dominantColor);
 
-			if (prv == pixel) {
-				++cnt;
+			if (prvColor == pixel) {
+				++runCnt;
 			}
 			else {
-				encodedData.push_back(cnt);
-				cnt = 1;
-				prv = pixel;
+				encodedData.push_back(runCnt);
+				runCnt = 1;
+				prvColor = pixel;
 			}
 		}
+
+		dir = -dir;
+		initVal = img.cols - 1 - initVal;
 	}
-	encodedData.push_back(cnt);
+	encodedData.push_back(runCnt);
+}
+
+void Compressor::encodeRunLengthVertical(const cv::Mat& img, vector<int>& encodedData) {
+	// Store image rows & cols count
+	encodedData.push_back(img.rows);
+	encodedData.push_back(img.cols);
+
+	// Store image pixels
+	int dir = 1;
+	int initVal = 0;
+	int runCnt = 0;
+	bool pixel, prvColor = true;
+
+	for (int j = 0; j < img.cols; ++j) {
+		for (int i = initVal; i >= 0 && i < img.rows; i += dir) {
+			pixel = (img.at<uchar>(i, j) == dominantColor);
+
+			if (prvColor == pixel) {
+				++runCnt;
+			}
+			else {
+				encodedData.push_back(runCnt);
+				runCnt = 1;
+				prvColor = pixel;
+			}
+		}
+
+		dir = -dir;
+		initVal = img.rows - 1 - initVal;
+	}
+	encodedData.push_back(runCnt);
+}
+
+void Compressor::encodeRunLengthSpiral(const cv::Mat& img, vector<int>& encodedData) {
+	// Store image rows & cols count
+	encodedData.push_back(img.rows);
+	encodedData.push_back(img.cols);
+
+	// Store image pixels
+	int i = 0, j = 0;
+	int up = 0, down = img.rows - 1, left = 0, right = img.cols - 1;
+	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
+	int dir = 0;
+	int dR[4] = { 0, 1, 0, -1 };
+	int dC[4] = { 1, 0, -1, 0 };
+	int runCnt = 0;
+	bool pixel, prvColor = true;
+
+	while (cellsVisCount++ < cellsCount) {
+		pixel = (img.at<uchar>(i, j) == dominantColor);
+
+		if (prvColor == pixel) {
+			++runCnt;
+		}
+		else {
+			encodedData.push_back(runCnt);
+			runCnt = 1;
+			prvColor = pixel;
+		}
+
+		int toR = i + dR[dir];
+		int toC = j + dC[dir];
+
+		if (toR > down) {
+			--right;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+		else if (toR < up) {
+			++left;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+		else if (toC > right) {
+			++up;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+		else if (toC < left) {
+			--down;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+
+		i += dR[dir];
+		j += dC[dir];
+	}
+
+	encodedData.push_back(runCnt);
 }
 
 void Compressor::encodeMetaData() {
@@ -246,8 +353,15 @@ void Compressor::decodeDistinctShapes() {
 
 	// Retrieve image distinct shapes
 	for (int i = 0; i < shapesCount; ++i) {
-		decodeRunLength(shapes[i]);
+		int decodeType = compressedData[dataIdx++];
 
+		if (decodeType == 0)
+			decodeRunLengthHorizontal(shapes[i]);
+		else if (decodeType == 1)
+			decodeRunLengthVertical(shapes[i]);
+		else if (decodeType == 2)
+			decodeRunLengthSpiral(shapes[i]);
+		
 		// Retrieve shape's refering blocks
 		int blocksCount = compressedData[dataIdx++];
 		shapeBlocks[i].resize(blocksCount);
@@ -283,29 +397,124 @@ void Compressor::decodeImageBlocks() {
 	}
 }
 
-void Compressor::decodeRunLength(cv::Mat& img) {
+void Compressor::decodeRunLengthHorizontal(cv::Mat& img) {
 	// Retrieve image rows & cols count
 	int rows = compressedData[dataIdx++];
 	int cols = compressedData[dataIdx++];
 
 	// Retrieve image pixels
 	img = cv::Mat(rows, cols, CV_8U);
-	int i = 0, j = 0, cnt;
+	int dir = 1;
+	int initVal = 0;
+	int i = 0, j = 0;
+	int runCnt;
 	bool color = true;
-	
-	while (i < rows) {
-		cnt = compressedData[dataIdx++];
 
-		while (cnt--) {
+	while (i < rows) {
+		runCnt = compressedData[dataIdx++];
+
+		while (runCnt--) {
 			img.at<uchar>(i, j) = (color ? dominantColor : blockColor);
 
-			if (++j >= cols) {
+			j += dir;
+
+			if (j < 0 || j >= cols) {
+				dir = -dir;
+				initVal = img.cols - 1 - initVal;
+
+				j = initVal;
 				++i;
-				j = 0;
 			}
 		}
 
 		color = !color;
+	}
+}
+
+void Compressor::decodeRunLengthVertical(cv::Mat& img) {
+	// Retrieve image rows & cols count
+	int rows = compressedData[dataIdx++];
+	int cols = compressedData[dataIdx++];
+
+	// Retrieve image pixels
+	img = cv::Mat(rows, cols, CV_8U);
+	int dir = 1;
+	int initVal = 0;
+	int i = 0, j = 0;
+	int runCnt;
+	bool color = true;
+
+	while (j < cols) {
+		runCnt = compressedData[dataIdx++];
+
+		while (runCnt--) {
+			img.at<uchar>(i, j) = (color ? dominantColor : blockColor);
+
+			i += dir;
+
+			if (i < 0 || i >= rows) {
+				dir = -dir;
+				initVal = img.rows - 1 - initVal;
+
+				i = initVal;
+				++j;
+			}
+		}
+
+		color = !color;
+	}
+}
+
+void Compressor::decodeRunLengthSpiral(cv::Mat& img) {
+	// Retrieve image rows & cols count
+	int rows = compressedData[dataIdx++];
+	int cols = compressedData[dataIdx++];
+	
+	// Retrieve image pixels
+	img = cv::Mat(rows, cols, CV_8U);
+	
+	int i = 0, j = 0;
+	int up = 0, down = img.rows - 1, left = 0, right = img.cols - 1;
+	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
+	int dir = 0;
+	int dR[4] = { 0, 1, 0, -1 };
+	int dC[4] = { 1, 0, -1, 0 };
+	int runCnt = 0;
+	bool color = false;
+
+	while (cellsVisCount < cellsCount) {
+		if (runCnt == 0) {
+			runCnt = compressedData[dataIdx++];
+			color = !color;
+			continue;
+		}
+
+		img.at<uchar>(i, j) = (color ? dominantColor : blockColor);
+		++cellsVisCount;
+		--runCnt;
+
+		int toR = i + dR[dir];
+		int toC = j + dC[dir];
+
+		if (toR > down) {
+			--right;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+		else if (toR < up) {
+			++left;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+		else if (toC > right) {
+			++up;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+		else if (toC < left) {
+			--down;
+			dir = (dir == 3) ? 0 : dir + 1;
+		}
+
+		i += dR[dir];
+		j += dC[dir];
 	}
 }
 

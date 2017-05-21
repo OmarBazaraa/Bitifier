@@ -15,7 +15,7 @@ using namespace std;
 #define PATH_COMPRESSED_DATA    "Data\\Compressed\\"
 #define PATH_UNCOMPRESSED_DATA  "Data\\Uncompressed\\"
 #define EXT_SAMPLE_FILE         "jpg"
-#define EXT_COMPRESSED_FILE     "cpr"
+#define EXT_COMPRESSED_FILE     "bit"
 
 /**
  * Used to boost reading/writing from/to the console
@@ -97,6 +97,7 @@ int main() {
 			}
 			*/
 
+			cout << "Compressed file size: " << comSize << " bytes" << endl;
 			cout << "Compression ratio: " << (double)orgSize / comSize << endl;
 			cout << "------------------------------------" << endl << endl;
 		}
@@ -106,6 +107,7 @@ int main() {
 	}
 
 	// Output average compression ratio
+	cout << "Total compressed files size: " << compressedFilesSize << " bytes" << endl;
 	cout << "Total compression ratio: " << (double) originalFilesSize / compressedFilesSize << endl << endl;
 
 	// Output process time

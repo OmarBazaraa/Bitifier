@@ -69,15 +69,30 @@ private:
 	void encodeImageBlocks();
 
 	/**
-	 * Encode the given image using run length encoding algorithm
+	 * Encode the given image using run length encoding algorithm in horizontal mannar
 	 */
-	void encodeRunLength(const cv::Mat& img, vector<int>& encodedData);
+	void encodeRunLengthHorizontal(const cv::Mat& img, vector<int>& encodedData);
+
+	/**
+	 * Encode the given image using run length encoding algorithm in vertical mannar
+	 */
+	void encodeRunLengthVertical(const cv::Mat& img, vector<int>& encodedData);
+
+	/**
+	 * Encode the given image using run length encoding algorithm in spiral mannar
+	 */
+	void encodeRunLengthSpiral(const cv::Mat& img, vector<int>& encodedData);
 
 	/**
 	 * Encode meta-data needed in decompression process
 	 */
 	void encodeMetaData();
 
+	// ==============================================================================
+	//
+	// Compression helper functions
+	//
+private:
 	/**
 	 * Detect image distinct shapes and map each image block to one of these shapes
 	 */
@@ -133,9 +148,19 @@ private:
 	void decodeImageBlocks();
 
 	/**
-	 * Decode the given encoded image using run length decoding algorithm
+	 * Decode the given encoded image using run length decoding algorithm in horizontal mannar
 	 */
-	void decodeRunLength(cv::Mat& img);
+	void decodeRunLengthHorizontal(cv::Mat& img);
+
+	/**
+	 * Decode the given encoded image using run length decoding algorithm in vertical mannar
+	 */
+	void decodeRunLengthVertical(cv::Mat& img);
+
+	/**
+	 * Decode the given encoded image using run length decoding algorithm in spiral mannar
+	 */
+	void decodeRunLengthSpiral(cv::Mat& img);
 
 	/**
 	 * Decode image compressed meta-data needed in decompression process

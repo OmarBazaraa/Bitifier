@@ -4,7 +4,6 @@
 #include <string>
 #include <map>
 #include "LZWBitConcatenator.h"
-#include "../BitConcatenator.h"
 #include "../ByteConcatenator.h"
 using namespace std;
 
