@@ -71,7 +71,7 @@ private:
 	/**
 	 * Encode the given image using run length encoding algorithm
 	 */
-	void encodeRunLength(const cv::Mat& img);
+	void encodeRunLength(const cv::Mat& img, vector<int>& encodedData);
 
 	/**
 	 * Encode meta-data needed in decompression process

@@ -51,7 +51,7 @@ void Compressor::encodeDistinctShapes() {
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
-		encodeRunLength(shapes[i]);
+		encodeRunLength(shapes[i], compressedData);
 
 		// Encode indecies of blocks refering to the i-th shape in relative order
 		compressedData.push_back(shapeBlocks[i].size());
@@ -70,10 +70,10 @@ void Compressor::encodeImageBlocks() {
 	}
 }
 
-void Compressor::encodeRunLength(const cv::Mat& img) {
+void Compressor::encodeRunLength(const cv::Mat& img, vector<int>& encodedData) {
 	// Store image rows & cols count
-	compressedData.push_back(img.rows);
-	compressedData.push_back(img.cols);
+	encodedData.push_back(img.rows);
+	encodedData.push_back(img.cols);
 
 	// Store image pixels
 	int cnt = 0;
@@ -86,13 +86,13 @@ void Compressor::encodeRunLength(const cv::Mat& img) {
 				++cnt;
 			}
 			else {
-				compressedData.push_back(cnt);
+				encodedData.push_back(cnt);
 				cnt = 1;
 				prv = pixel;
 			}
 		}
 	}
-	compressedData.push_back(cnt);
+	encodedData.push_back(cnt);
 }
 
 void Compressor::encodeMetaData() {
