@@ -72,6 +72,11 @@ private:
 	void encodeDistinctShapes();
 
 	/**
+	 *
+	 */
+	void applySymmetry(cv::Mat& img);
+
+	/**
 	 * Encode image blocks upper left pixel indecies
 	 */
 	void encodeImageBlocks();

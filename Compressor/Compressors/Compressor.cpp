@@ -52,10 +52,12 @@ void Compressor::encodeDistinctShapes() {
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
+		//applySymmetry(shapes[i]);
+
 		//
 		// Try different run length encoding tequnices and pick the better one
 		//
-		vector<pair<vector<int>, int>> vec(3);
+		vector<pair<vector<int>, int>> vec(4);
 
 		encodeRunLengthHorizontal(shapes[i], vec[0].first);
 		vec[0].second = RUN_LENGTH_HOR;
@@ -63,8 +65,8 @@ void Compressor::encodeDistinctShapes() {
 		vec[1].second = RUN_LENGTH_VER;
 		encodeRunLengthSpiral(shapes[i], vec[2].first);
 		vec[2].second = RUN_LENGTH_SPIRAL;
-		//encodeRunLengthZigZag(shapes[i], vec[3].first);
-		//vec[3].second = RUN_LENGTH_ZIGZAG;
+		encodeRunLengthZigZag(shapes[i], vec[3].first);
+		vec[3].second = RUN_LENGTH_ZIGZAG;
 
 		sort(vec.begin(), vec.end(), cmp);
 
@@ -89,6 +91,66 @@ void Compressor::encodeDistinctShapes() {
 
 	// Insert encoded shapes
 	compressedData.insert(compressedData.end(), encodedShapes.begin(), encodedShapes.end());
+}
+
+void Compressor::applySymmetry(cv::Mat& img) {
+	int n = img.rows / 2;
+	int m = img.cols / 2;
+
+	bool horFlag = true;
+	bool verFlag = true;
+
+	// Check for symmetry around horizontal axis
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < img.cols; ++j) {
+			if (img.at<uchar>(i, j) != img.at<uchar>(img.rows - i - 1, j)) {
+				horFlag = false;
+				break;
+			}
+		}
+
+		if (!horFlag) {
+			break;
+		}
+	}
+
+	// Check for symmetry around vertical axis
+	for (int j = 0; j < m; ++j) {
+		for (int i = 0; i < img.rows; ++i) {
+			if (img.at<uchar>(i, j) != img.at<uchar>(i, img.cols - j - 1)) {
+				verFlag = false;
+				break;
+			}
+		}
+
+		if (!verFlag) {
+			break;
+		}
+	}
+
+
+	n = img.rows;
+	m = img.cols;
+
+	if (horFlag && verFlag) {
+		cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HOR & VER" << endl;
+
+		n = img.rows / 2 + (img.rows & 1);
+		m = img.cols / 2 + (img.cols & 1);
+	}
+	else if (horFlag) {
+		cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HOR" << endl;
+
+		n = img.rows / 2 + (img.rows & 1);
+	}
+	else if (verFlag) {
+		cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> VER" << endl;
+
+		m = img.cols / 2 + (img.cols & 1);
+	}
+
+	//cv::Mat shape(img, Range(0, n), Range(0, m));
+	//img = shape;
 }
 
 void Compressor::encodeImageBlocks() {
