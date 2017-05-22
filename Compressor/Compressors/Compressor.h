@@ -181,6 +181,11 @@ private:
 	void decodeRunLengthSpiral(cv::Mat& img);
 
 	/**
+	 * Decode the given encoded image using run length decoding algorithm in zig-zag mannar
+	 */
+	void decodeRunLengthZigZag(cv::Mat& img);
+
+	/**
 	 * Decode image compressed meta-data needed in decompression process
 	 */
 	void decodeMetaData();

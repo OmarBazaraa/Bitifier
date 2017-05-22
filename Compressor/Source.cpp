@@ -8,7 +8,6 @@
 #include "Utilities\Directory.h"
 #include "Utilities\Utility.h"
 #include "Compressors\Compressor.h"
-#include "Compressors\Beta\ArithmeticCoder.h"
 using namespace std;
 
 // Pathes
@@ -38,15 +37,7 @@ int main() {
 	vector<pair<string, string>> files;
 
 	cout << fixed << setprecision(3);
-
-	/*vector<uchar> vec, temp;
-	loadFile("out.txt", vec);
-	ArithmeticCoder coder;
-	coder.encode(vec, temp);
-	cout << vec.size() << endl;
-	cout << temp.size() << endl;
-	return 0;*/
-
+	
 	try {
 		// Read files info
 		getFilesInDirectory(PATH_SAMPLE_DATA, files);
@@ -59,7 +50,7 @@ int main() {
 
 			// Get file pathes
 			string src = PATH_SAMPLE_DATA + files[i].first + "." + EXT_SAMPLE_FILE;
-			string cpr = PATH_COMPRESSED_DATA + files[i].first + "." + EXT_COMPRESSED_FILE;
+			string bit = PATH_COMPRESSED_DATA + files[i].first + "." + EXT_COMPRESSED_FILE;
 			string dst = PATH_UNCOMPRESSED_DATA + files[i].first + "." + EXT_SAMPLE_FILE;
 
 			// Compression variables
@@ -81,14 +72,13 @@ int main() {
 
 			// Saving compressed image
 			cout << "Saving compressed file..." << endl;
-			saveFile(cpr, compressedBytes);
+			saveFile(bit, compressedBytes);
 			
 			// ======================================================================
 
-			/*
 			// Loading file
 			cout << "Loading compressed file..." << endl;
-			loadFile(cpr, compressedBytes);
+			loadFile(bit, compressedBytes);
 
 			// Extracting
 			cout << "Extracting..." << endl;
@@ -104,7 +94,6 @@ int main() {
 				cout << "Lossy compression!" << endl;
 				return 0;
 			}
-			*/
 
 			cout << "Compressed file size: " << comSize << " bytes" << endl;
 			cout << "Compression ratio: " << (double)orgSize / comSize << endl;

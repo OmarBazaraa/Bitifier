@@ -52,10 +52,8 @@ void Compressor::encodeDistinctShapes() {
 	// Encode image distinct shapes
 	compressedData.push_back(shapes.size());
 	for (int i = 0; i < shapes.size(); ++i) {
-		//applySymmetry(shapes[i]);
-
 		//
-		// Try different run length encoding tequnices and pick the better one
+		// Try different run length encoding techniques and pick the better one
 		//
 		vector<pair<vector<int>, int>> vec(4);
 
@@ -69,10 +67,6 @@ void Compressor::encodeDistinctShapes() {
 		vec[3].second = RUN_LENGTH_ZIGZAG;
 
 		sort(vec.begin(), vec.end(), cmp);
-
-		if (vec[0].second == RUN_LENGTH_ZIGZAG) {
-			cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ZIG-ZAG" << endl;
-		}
 
 		encodedShapes.insert(encodedShapes.end(), vec[0].first.begin(), vec[0].first.end());
 
@@ -99,7 +93,7 @@ void Compressor::applySymmetry(cv::Mat& img) {
 
 	bool horFlag = true;
 	bool verFlag = true;
-
+	
 	// Check for symmetry around horizontal axis
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < img.cols; ++j) {
@@ -128,29 +122,28 @@ void Compressor::applySymmetry(cv::Mat& img) {
 		}
 	}
 
-
 	n = img.rows;
 	m = img.cols;
 
 	if (horFlag && verFlag) {
 		cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HOR & VER" << endl;
-
 		n = img.rows / 2 + (img.rows & 1);
 		m = img.cols / 2 + (img.cols & 1);
 	}
 	else if (horFlag) {
 		cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> HOR" << endl;
-
 		n = img.rows / 2 + (img.rows & 1);
 	}
 	else if (verFlag) {
 		cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> VER" << endl;
-
 		m = img.cols / 2 + (img.cols & 1);
 	}
+	else {
+		return;
+	}
 
-	//cv::Mat shape(img, Range(0, n), Range(0, m));
-	//img = shape;
+	cv::Mat shape(img, Range(0, n), Range(0, m));
+	img = shape;
 }
 
 void Compressor::encodeImageBlocks() {
@@ -501,6 +494,8 @@ void Compressor::decodeDistinctShapes() {
 			decodeRunLengthVertical(shapes[i]);
 		else if (type == RUN_LENGTH_SPIRAL)
 			decodeRunLengthSpiral(shapes[i]);
+		else if (type == RUN_LENGTH_ZIGZAG)
+			decodeRunLengthZigZag(shapes[i]);
 		
 		// Retrieve shape's refering blocks
 		int blocksCount = compressedData[dataIdx++];
@@ -533,7 +528,7 @@ void Compressor::decodeImageBlocks() {
 			}
 		}
 
-		prv = startPixelIdx;
+		prv = startPixelIdx;// +shapes[blockShapeIdx].cols / 1.65;
 	}
 }
 
@@ -655,6 +650,57 @@ void Compressor::decodeRunLengthSpiral(cv::Mat& img) {
 
 		i += dR[dir];
 		j += dC[dir];
+	}
+}
+
+void Compressor::decodeRunLengthZigZag(cv::Mat& img) {
+	// Retrieve image rows & cols count
+	int rows = compressedData[dataIdx++];
+	int cols = compressedData[dataIdx++];
+
+	// Retrieve image pixels
+	img = cv::Mat(rows, cols, CV_8U);
+
+	int i = img.rows - 1, j = img.cols - 1;
+	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
+	int dir = 0;
+	int dR[2] = { 1, -1 };
+	int dC[2] = { -1, 1 };
+	int runCnt = 0;
+	bool color = false;
+
+	while (cellsVisCount < cellsCount) {
+		if (runCnt == 0) {
+			runCnt = compressedData[dataIdx++];
+			color = !color;
+			continue;
+		}
+
+		img.at<uchar>(i, j) = (color ? dominantColor : blockColor);
+		++cellsVisCount;
+		--runCnt;
+
+		i += dR[dir];
+		j += dC[dir];
+
+		if (i < 0) {
+			i = 0;
+			j -= 2;
+			dir = 1 - dir;
+		}
+		else if (j < 0) {
+			j = 0;
+			i -= 2;
+			dir = 1 - dir;
+		}
+		else if (i >= img.rows) {
+			i = img.rows - 1;
+			dir = 1 - dir;
+		}
+		else if (j >= img.cols) {
+			j = img.cols - 1;
+			dir = 1 - dir;
+		}
 	}
 }
 
