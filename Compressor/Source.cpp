@@ -85,7 +85,7 @@ int main() {
 			
 			// ======================================================================
 
-			///*
+			/*
 			// Loading file
 			cout << "Loading compressed file..." << endl;
 			loadFile(cpr, compressedBytes);
@@ -104,7 +104,7 @@ int main() {
 				cout << "Lossy compression!" << endl;
 				return 0;
 			}
-			//*/
+			*/
 
 			cout << "Compressed file size: " << comSize << " bytes" << endl;
 			cout << "Compression ratio: " << (double)orgSize / comSize << endl;

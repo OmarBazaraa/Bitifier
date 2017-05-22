@@ -55,31 +55,30 @@ void Compressor::encodeDistinctShapes() {
 		//
 		// Try different run length encoding tequnices and pick the better one
 		//
-		int type;
-		vector<int> horRL, verRL, spiralRL;
+		vector<pair<vector<int>, int>> vec(3);
 
-		encodeRunLengthHorizontal(shapes[i], horRL);
-		encodeRunLengthVertical(shapes[i], verRL);
-		encodeRunLengthSpiral(shapes[i], spiralRL);
-		
-		if (spiralRL.size() < horRL.size() && spiralRL.size() < verRL.size()) {
-			type = RUN_LENGTH_SPIRAL;
-			encodedShapes.insert(encodedShapes.end(), spiralRL.begin(), spiralRL.end());
+		encodeRunLengthHorizontal(shapes[i], vec[0].first);
+		vec[0].second = RUN_LENGTH_HOR;
+		encodeRunLengthVertical(shapes[i], vec[1].first);
+		vec[1].second = RUN_LENGTH_VER;
+		encodeRunLengthSpiral(shapes[i], vec[2].first);
+		vec[2].second = RUN_LENGTH_SPIRAL;
+		//encodeRunLengthZigZag(shapes[i], vec[3].first);
+		//vec[3].second = RUN_LENGTH_ZIGZAG;
+
+		sort(vec.begin(), vec.end(), cmp);
+
+		if (vec[0].second == RUN_LENGTH_ZIGZAG) {
+			cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> ZIG-ZAG" << endl;
 		}
-		else if (verRL.size() < horRL.size()) {
-			type = RUN_LENGTH_VER;
-			encodedShapes.insert(encodedShapes.end(), verRL.begin(), verRL.end());
-		}
-		else {
-			type = RUN_LENGTH_HOR;
-			encodedShapes.insert(encodedShapes.end(), horRL.begin(), horRL.end());
-		}
+
+		encodedShapes.insert(encodedShapes.end(), vec[0].first.begin(), vec[0].first.end());
 
 		if (i & 1)
-			compressedData.back() |= type << 2;
+			compressedData.back() |= vec[0].second << 2;
 		else
-			compressedData.push_back(type);
-		
+			compressedData.push_back(vec[0].second);
+
 		// Encode indecies of blocks refering to the i-th shape in relative order
 		encodedShapes.push_back(shapeBlocks[i].size());
 		for (int j = 0, prv = 0; j < shapeBlocks[i].size(); ++j) {
@@ -222,11 +221,11 @@ void Compressor::encodeRunLengthZigZag(const cv::Mat& img, vector<int>& encodedD
 	encodedData.push_back(img.cols);
 
 	// Store image pixels
-	int i = 0, j = 0;
+	int i = img.rows - 1, j = img.cols - 1;
 	int cellsVisCount = 0, cellsCount = img.rows * img.cols;
 	int dir = 0;
-	int dR[4] = { 0, 1, 0, -1 };
-	int dC[4] = { 1, 0, -1, 0 };
+	int dR[2] = { 1, -1 };
+	int dC[2] = { -1, 1 };
 	int runCnt = 0;
 	bool pixel, prvColor = true;
 
@@ -242,10 +241,27 @@ void Compressor::encodeRunLengthZigZag(const cv::Mat& img, vector<int>& encodedD
 			prvColor = pixel;
 		}
 
-		int toR = i + dR[dir];
-		int toC = j + dC[dir];
+		i += dR[dir];
+		j += dC[dir];
 
-		
+		if (i < 0) {
+			i = 0;
+			j -= 2;
+			dir = 1 - dir;
+		}
+		else if (j < 0) {
+			j = 0;
+			i -= 2;
+			dir = 1 - dir;
+		}
+		else if (i >= img.rows) {
+			i = img.rows - 1;
+			dir = 1 - dir;
+		}
+		else if (j >= img.cols) {
+			j = img.cols - 1;
+			dir = 1 - dir;
+		}
 	}
 
 	encodedData.push_back(runCnt);
@@ -348,6 +364,10 @@ void Compressor::detectDominantColor() {
 
 	dominantColor = (whiteCnt * 2 > imageMat.rows * imageMat.cols ? 255 : 0);
 	blockColor = 255 - dominantColor;
+}
+
+bool cmp(const pair<vector<int>, int>& lhs, const pair<vector<int>, int>& rhs) {
+	return lhs.first.size() < rhs.first.size();
 }
 
 // ==============================================================================

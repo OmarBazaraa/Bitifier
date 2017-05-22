@@ -19,6 +19,8 @@
 using namespace cv;
 using namespace std;
 
+bool cmp(const pair<vector<int>, int>& lhs, const pair<vector<int>, int>& rhs);
+
 class Compressor
 {
 private:
