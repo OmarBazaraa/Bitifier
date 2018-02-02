@@ -34,7 +34,21 @@ Let’s assume that we have the following integers as input to this layer (each 
 `0001 0002 0003 0004 0045`
 
 As you can see there’re a lot of null characters (0 byte) in the above input, and the input total size is 4*5 = 20 bytes.
-By taking the ﬁrst integer, it has 3 null bytes so we need to store in the meta data that it has only one data byte (one data byte is represented by 00 and 2 data bytes is represented as 01 and so on, so we can use only 2 bits to know the number of non-null bytes in the given integer), and as you can see that we have 4 successive integers with only one non-null byte, now the data the really needs to be encoded will be (123445) and the meta data will have 2 bytes (00000100 [most signiﬁcant 2 bits means that the integers contain only one non-null byte, then the last 6 bits contains the length of the run {in this case 4 successive integers}]) and (01000001 [most signiﬁcant 2 bits means that the integers contain only 2 non-null bytes, then the last 6 bits contains the length of the run {in this case 1 integer}]).
+By taking the ﬁrst integer, it has 3 null bytes so we need to store in the meta data that it has only one data byte (one data byte is represented by 00 and 2 data bytes is represented as 01 and so on, so we can use only 2 bits to know the number of non-null bytes in the given integer), and as you can see that we have 4 successive integers with only one non-null byte, now the data the really needs to be encoded will be 
+
+`123445`
+
+and the meta data will have 2 bytes 
+
+* `00000100`
+
+most signiﬁcant 2 bits means that the integers contain only one non-null byte, then the last 6 bits contains the length of the run (in this case 4 successive integers)
+and
+
+* `01000001`
+
+most signiﬁcant 2 bits means that the integers contain only 2 non-null bytes, then the last 6 bits contains the length of the run (in this case 1 integer).
+
 As you can see the total output bytes count 6 bytes (data) + 2 bytes (meta-data) = 8 bytes instead of 20 original ones, and we can assure you that as the data gets larger, this ratio gets better and better. 
 
 ### Huffman:
