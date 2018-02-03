@@ -10,7 +10,7 @@ In this report, we’ll be discussing the lossless algorithm that we’ve develo
 # Bitiﬁer History
 **Bitiﬁer** has come through many stages to reach what it is today, in the following paragraphs and graph we will be showing the development history and how each added technique/algorithm contributed in shaping the current Bitiﬁer.
 
-![alt text](https://lh5.googleusercontent.com/E37902D_oI1ZB5o9ECGUqsb_JXjb6_PGIOIG3bMVYpsSGFzVPPdHk8rs_OrLOkQZAQpu-MESfaJIXqVTvMqX=w1920-h949-rw)
+![alt text](https://lh6.googleusercontent.com/hx4OZzRJhuBLYme3x48uU-bBsAV3Io3isYLQOwwJJq-E5v2Isy4ai2Ygc3YAUxiUDR34ht0_Q7ePke10ODPK=w1920-h949-rw)
 
 # Bitifier
 **Bitiﬁer** is a compression algorithm that takes the input ﬁle and passes it through many layers to get the compressed result. The following list shows those layers in a simple way.
@@ -56,7 +56,7 @@ As you can see the total output bytes count 6 bytes (data) + 2 bytes (meta-data)
 This last layer uses the basic Huffman algorithm to encode the data from previous layers, and after encoding the frequencies of the symbols (needed to rebuild the Huffman tree when decoding) we use the bit concatenation (same as byte concatenation but on the bit level not only bytes) to reduce the size.
 
 # Encoded File Content
-![alt text](https://lh5.googleusercontent.com/fcQ6sWEzXiD2DWKUyVEwJ7-LNanZC2FDvYXbciHzzMNmzanxYtWmzM2nT0AwE9bXHS0FY_3_nlKxzm3cu4UH=w1920-h949-rw)
+![alt text](https://lh3.googleusercontent.com/S6D8jah9uOJ3ho02eo9x3cIO4x7T4cyu7HfwmWtEphjc0kvfRwN5OYoczOtQAILheCrLTWLjsWprbtR6QgDC=w1920-h949-rw)
 
 # Decoding
 **Bitiﬁer** decoding process is just a simple inverse to the above described technique and it takes the “ﬁnal output ﬁle” from the above diagram as its input. We ﬁrst start by decoding the Huffman encoded string into some sort of symbols taking the advantage of the fact that Huffman is an instantaneous code, after that we’ve to invert the byte concatenation algorithm effect by using its inverse method, for example if we’ve to decode the data in the above example (123445) and the corresponding meta data (00000100 01000001), the ﬁrst byte in the meta data tells us that the ﬁrst 4 bytes of the data were originally integers with only one (00) non-null byte, so we can expand the ﬁrst 4 bytes to (0001 0002 0003 0004), then the second byte in the meta data tells us that the next 2 bytes were originally integers with only two (01) non-null bytes, so we can expand the next two bytes to (0045). As you can see we were able to retrieve the original data.
