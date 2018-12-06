@@ -112,7 +112,8 @@ void ByteConcatenator::decodeDataSizes() {
 	}
 
 	if (compressedData.size() != bytesCnt) {
-		throw exception("Could not extract the given file");
+		// throw exception("Could not extract the given file");
+		cerr << "Could not extract the given file" << endl;
 	}
 }
 

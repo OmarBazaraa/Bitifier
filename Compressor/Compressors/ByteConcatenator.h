@@ -1,8 +1,10 @@
 #pragma once
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <stack>
 #include <map>
+
 using namespace std;
 
 typedef unsigned char uchar;

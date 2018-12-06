@@ -121,7 +121,8 @@ void ArithmeticCoder::encodeSymbols(vector<uchar>& encodedData) {
 	int n = metaData.size();
 
 	if (n >= 1 << 16) {
-		throw exception("Cannot encode arithmetic coding meta-data");
+		// throw exception("Cannot encode arithmetic coding meta-data");
+		cerr << "Cannot encode arithmetic coding meta-data" << endl;
 	}
 
 	encodedData.push_back(n);

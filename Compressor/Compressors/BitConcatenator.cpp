@@ -51,7 +51,8 @@ void BitConcatenator::encodeBinary(int number) {
 			break;
 
 	if (i >= blockLengthsCount) {
-		throw exception("Bit concatenation failed");
+		// throw exception("Bit concatenation failed");
+		cerr << "Bit concatenation failed" << endl;
 	}
 
 	dataBitStr += bitStr + string(blockLengths[i] - (int)bitStr.size(), '0');
@@ -102,7 +103,8 @@ void BitConcatenator::deconcatenate(vector<uchar>& data, vector<int>& outputData
 void BitConcatenator::decodeBitString(vector<int>& outputData) {
 	for (int i = 0, l = 0; i < compressedDataSizes.size(); ++i) {
 		int dataSize = compressedDataSizes[i];
-		int data = toDecimal(dataBitStr.substr(l, dataSize));
+		string s = dataBitStr.substr(l, dataSize);
+		int data = toDecimal(s);
 		l += dataSize;
 		outputData.push_back(data);
 	}
@@ -125,7 +127,8 @@ void BitConcatenator::decodeDataSizes() {
 	}
 
 	if (compressedData.size() != (bitsCount + 7) >> 3) {
-		throw exception("Could not extract the given file");
+		// throw exception("Could not extract the given file");
+		cerr << "Could not extract the given file" << endl;
 	}
 }
 

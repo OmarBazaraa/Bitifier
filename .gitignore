@@ -24,6 +24,7 @@
 bld/
 [Bb]in/
 [Oo]bj/
+build/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -258,3 +259,9 @@ ModelManifest.xml
 
 # MAC specific files
 .DS_Store
+
+# Clion specific files
+.idea/*
+cmake-build-debug/*
+cmake-build-release/*
+CMakeLists.txt

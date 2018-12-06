@@ -58,7 +58,8 @@ void LZW::decode(const vector<int>& data, vector<int>& outputData) {
 		int code = tempData[i];
 
 		if (code > decoderDictionary.size()) {
-			throw exception("LZW decoding failed");
+			// throw exception("LZW decoding failed");
+			cerr << "LZW  decoding failed" << endl;
 		}
 
 		entry = decoderDictionary[code];

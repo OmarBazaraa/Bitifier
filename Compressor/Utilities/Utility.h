@@ -21,7 +21,10 @@ inline cv::Mat loadBinaryImage(const string& path) {
 	// Check for invalid input
 	if (grayMat.empty() || !grayMat.data) {
 		string errorMessage = "Could not load the image at: " + path;
-		throw exception(errorMessage.c_str());
+		// throw exception(errorMessage.c_str());
+		cerr << errorMessage.c_str() << endl;
+
+		return cv::Mat();
 	}
 
 	// Binary image
@@ -41,7 +44,10 @@ inline void saveFile(const string& path, const vector<uchar>& outBytes) {
 
 	if (!fout.is_open()) {
 		string errorMessage = "Could not load the file at: " + path;
-		throw exception(errorMessage.c_str());
+		// throw exception(errorMessage.c_str());
+		cerr << errorMessage.c_str() << endl;
+
+		return;
 	}
 
 	fout.write((char*)outBytes.data(), outBytes.size());
@@ -57,7 +63,10 @@ inline void loadFile(const string& path, vector<uchar>& inBytes) {
 
 	if (!fin.is_open()) {
 		string errorMessage = "Could not load the file at: " + path;
-		throw exception(errorMessage.c_str());
+		// throw exception(errorMessage.c_str());
+		cerr << errorMessage.c_str() << endl;
+
+		return;
 	}
 
 	// Get file size
