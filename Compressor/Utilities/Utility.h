@@ -15,7 +15,7 @@ using namespace std;
  * Loads binary image from the given path into a matrix of pixels
  */
 inline cv::Mat loadBinaryImage(const string& path) {
-	// Load colored image from file
+	// Load gray scale image from file
 	cv::Mat grayMat = imread(path, CV_LOAD_IMAGE_GRAYSCALE);
 
 	// Check for invalid input
@@ -81,11 +81,11 @@ inline bool compareImages(const cv::Mat& img1, const cv::Mat& img2) {
 	if (img1.empty() && img2.empty())
 		return true;
 
-	// if dimensions of two mat is not identical, these two mat is not identical
+	// check the dimensions of the two matrices
 	if (img1.cols != img2.cols || img1.rows != img2.rows || img1.dims != img2.dims)
 		return false;
 
-	// Compare every pixel
+	// Compare every element in the two matrices
 	for (int i = 0; i < img1.rows; ++i)
 		for (int j = 0; j < img1.cols; ++j)
 			if (img1.at<bool>(i, j) != img2.at<bool>(i, j))

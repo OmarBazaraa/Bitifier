@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "ByteConcatenator.h"
+#include "../BitConcatenator.h"
 using namespace std;
 
 typedef unsigned char uchar;

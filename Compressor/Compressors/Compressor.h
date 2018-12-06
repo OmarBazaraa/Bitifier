@@ -15,11 +15,11 @@
 // Custom libraries
 #include "ByteConcatenator.h"
 #include "Huffman.h"
-#include "ArithmeticCoder.h"
-#include "LZW.h"
 
 using namespace cv;
 using namespace std;
+
+bool cmp(const pair<vector<int>, int>& lhs, const pair<vector<int>, int>& rhs);
 
 class Compressor
 {
@@ -44,6 +44,12 @@ private:
 	int dirC[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
 	int minRow, minCol, maxRow, maxCol;
 
+	// Run-Length encoding types
+	const int RUN_LENGTH_HOR = 0;
+	const int RUN_LENGTH_VER = 1;
+	const int RUN_LENGTH_SPIRAL = 2;
+	const int RUN_LENGTH_ZIGZAG = 3;
+
 	// ==============================================================================
 	//
 	// Compression functions
@@ -66,27 +72,45 @@ private:
 	void encodeDistinctShapes();
 
 	/**
+	 *
+	 */
+	void applySymmetry(cv::Mat& img);
+
+	/**
 	 * Encode image blocks upper left pixel indecies
 	 */
 	void encodeImageBlocks();
 
 	/**
-	 * Encode the given image using run length encoding algorithm
+	 * Encode the given image using run length encoding algorithm in horizontal mannar
 	 */
-	void encodeRunLength(const cv::Mat& img);
+	void encodeRunLengthHorizontal(const cv::Mat& img, vector<int>& encodedData);
 
 	/**
-	 * 
+	 * Encode the given image using run length encoding algorithm in vertical mannar
 	 */
-	void encodeShape(const cv::Mat& img);
+	void encodeRunLengthVertical(const cv::Mat& img, vector<int>& encodedData);
 
-	int detectSquare(const cv::Mat& img, cv::Mat& visited, int upperLeftCorner);
+	/**
+	 * Encode the given image using run length encoding algorithm in spiral mannar
+	 */
+	void encodeRunLengthSpiral(const cv::Mat& img, vector<int>& encodedData);
+
+	/**
+	 * Encode the given image using run length encoding algorithm in zig-zag mannar
+	 */
+	void encodeRunLengthZigZag(const cv::Mat& img, vector<int>& encodedData);
 
 	/**
 	 * Encode meta-data needed in decompression process
 	 */
 	void encodeMetaData();
 
+	// ==============================================================================
+	//
+	// Compression helper functions
+	//
+private:
 	/**
 	 * Detect image distinct shapes and map each image block to one of these shapes
 	 */
@@ -142,9 +166,24 @@ private:
 	void decodeImageBlocks();
 
 	/**
-	 * Decode the given encoded image using run length decoding algorithm
+	 * Decode the given encoded image using run length decoding algorithm in horizontal mannar
 	 */
-	void decodeRunLength(cv::Mat& img);
+	void decodeRunLengthHorizontal(cv::Mat& img);
+
+	/**
+	 * Decode the given encoded image using run length decoding algorithm in vertical mannar
+	 */
+	void decodeRunLengthVertical(cv::Mat& img);
+
+	/**
+	 * Decode the given encoded image using run length decoding algorithm in spiral mannar
+	 */
+	void decodeRunLengthSpiral(cv::Mat& img);
+
+	/**
+	 * Decode the given encoded image using run length decoding algorithm in zig-zag mannar
+	 */
+	void decodeRunLengthZigZag(cv::Mat& img);
 
 	/**
 	 * Decode image compressed meta-data needed in decompression process

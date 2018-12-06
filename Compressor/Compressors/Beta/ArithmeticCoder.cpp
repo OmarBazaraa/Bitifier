@@ -114,7 +114,7 @@ void ArithmeticCoder::_encode(const vector<uchar>& data) {
 }
 
 void ArithmeticCoder::encodeSymbols(vector<uchar>& encodedData) {
-	ByteConcatenator concat;
+	BitConcatenator concat;
 	vector<uchar> metaData;
 	concat.concatenate(symbolsFrq, metaData);
 
@@ -145,7 +145,7 @@ void ArithmeticCoder::decodeSymbols(const vector<uchar>& data) {
 
 	dataIdx = n - 1;
 
-	ByteConcatenator concat;
+	BitConcatenator concat;
 	vector<uchar> metaData(data.begin() + 2, data.begin() + n);
 	concat.deconcatenate(metaData, symbolsFrq);
 

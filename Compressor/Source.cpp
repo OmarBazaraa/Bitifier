@@ -15,7 +15,7 @@ using namespace std;
 #define PATH_COMPRESSED_DATA    "Data\\Compressed\\"
 #define PATH_UNCOMPRESSED_DATA  "Data\\Uncompressed\\"
 #define EXT_SAMPLE_FILE         "jpg"
-#define EXT_COMPRESSED_FILE     "cpr"
+#define EXT_COMPRESSED_FILE     "bit"
 
 /**
  * Used to boost reading/writing from/to the console
@@ -37,7 +37,7 @@ int main() {
 	vector<pair<string, string>> files;
 
 	cout << fixed << setprecision(3);
-
+	
 	try {
 		// Read files info
 		getFilesInDirectory(PATH_SAMPLE_DATA, files);
@@ -50,7 +50,7 @@ int main() {
 
 			// Get file pathes
 			string src = PATH_SAMPLE_DATA + files[i].first + "." + EXT_SAMPLE_FILE;
-			string cpr = PATH_COMPRESSED_DATA + files[i].first + "." + EXT_COMPRESSED_FILE;
+			string bit = PATH_COMPRESSED_DATA + files[i].first + "." + EXT_COMPRESSED_FILE;
 			string dst = PATH_UNCOMPRESSED_DATA + files[i].first + "." + EXT_SAMPLE_FILE;
 
 			// Compression variables
@@ -72,14 +72,13 @@ int main() {
 
 			// Saving compressed image
 			cout << "Saving compressed file..." << endl;
-			saveFile(cpr, compressedBytes);
+			saveFile(bit, compressedBytes);
 			
 			// ======================================================================
 
-			/*
 			// Loading file
 			cout << "Loading compressed file..." << endl;
-			loadFile(cpr, compressedBytes);
+			loadFile(bit, compressedBytes);
 
 			// Extracting
 			cout << "Extracting..." << endl;
@@ -95,8 +94,8 @@ int main() {
 				cout << "Lossy compression!" << endl;
 				return 0;
 			}
-			*/
 
+			cout << "Compressed file size: " << comSize << " bytes" << endl;
 			cout << "Compression ratio: " << (double)orgSize / comSize << endl;
 			cout << "------------------------------------" << endl << endl;
 		}
@@ -106,6 +105,7 @@ int main() {
 	}
 
 	// Output average compression ratio
+	cout << "Total compressed files size: " << compressedFilesSize << " bytes" << endl;
 	cout << "Total compression ratio: " << (double) originalFilesSize / compressedFilesSize << endl << endl;
 
 	// Output process time

@@ -7,66 +7,73 @@
 void BitConcatenator::concatenate(const vector<int>& data, vector<uchar>& outputData) {
 	// Clear previous data
 	dataBitStr.clear();
-	dataSizesBitStr.clear();
-	compressedBytes.clear();
+	compressedData.clear();
+	compressedDataSizes.clear();
 
 	// Concatenate data
 	for (int i = 0; i < data.size(); ++i) {
 		encodeBinary(data[i]);
 	}
-
-	encodeBitString(dataBitStr + dataSizesBitStr);
-	encodeMetaData();
+	
+	encodeBitString(dataBitStr);
+	encodeDataSizes();
 
 	// Swap the two vectors to return concatenated data to function caller
-	outputData.swap(compressedBytes);
+	outputData.swap(compressedData);
 }
 
 void BitConcatenator::encodeBitString(const string& str) {
 	uchar byte = 0;
-	int bitsCount = 0;
+	int bitsCount = 8;
 
-	for (int i = 0; i < str.size(); ++i) {
-		byte |= (str[i] - '0') << bitsCount++;
+	for (int j = 0; j < str.size(); ++j) {
+		byte |= (str[j] - '0') << --bitsCount;
 
-		if (bitsCount >= 8) {
-			compressedBytes.push_back(byte);
+		if (bitsCount <= 0) {
+			compressedData.push_back(byte);
 			byte = 0;
-			bitsCount = 0;
+			bitsCount = 8;
 		}
 	}
 
-	if (bitsCount > 0) {
-		compressedBytes.push_back(byte);
+	if (bitsCount < 8) {
+		compressedData.push_back(byte);
 	}
 }
 
 void BitConcatenator::encodeBinary(int number) {
 	string bitStr = toBinary(number);
-	string bitsCountStr = toBinary(bitStr.size() - 1);
-	
-	dataBitStr += bitStr;
-	dataSizesBitStr += bitsCountStr;
 
-	dataSizesLengths.push_back(bitStr.size());
+	int i;
+
+	for (i = 0; i < blockLengthsCount; ++i)
+		if (bitStr.size() <= blockLengths[i])
+			break;
+
+	if (i >= blockLengthsCount) {
+		throw exception("Bit concatenation failed");
+	}
+
+	dataBitStr += bitStr + string(blockLengths[i] - (int)bitStr.size(), '0');
+	compressedDataSizes.push_back(i);
 }
 
-void BitConcatenator::encodeMetaData() {
+void BitConcatenator::encodeDataSizes() {
 	int cnt = 1;
-	int prv = dataSizesLengths.back();
-	for (int i = (int)dataSizesLengths.size() - 2; i >= 0; --i) {
-		if (prv == dataSizesLengths[i] && cnt < 31) {
+	int prv = compressedDataSizes.back();
+	for (int i = (int)compressedDataSizes.size() - 2; i >= 0; --i) {
+		if (prv == compressedDataSizes[i] && cnt < 63) {
 			++cnt;
 		}
 		else {
-			cnt |= (prv - 1) << 5;
-			compressedBytes.push_back(cnt);
+			cnt |= prv << 6;
+			compressedData.push_back(cnt);
 			cnt = 1;
-			prv = dataSizesLengths[i];
+			prv = compressedDataSizes[i];
 		}
 	}
-	cnt |= (prv - 1) << 5;
-	compressedBytes.push_back(cnt);
+	cnt |= prv << 6;
+	compressedData.push_back(cnt);
 }
 
 // ==============================================================================
@@ -74,42 +81,51 @@ void BitConcatenator::encodeMetaData() {
 // Deconcatenation functions
 //
 
-void BitConcatenator::deconcatenate(const vector<uchar>& data, vector<int>& outputData) {
+void BitConcatenator::deconcatenate(vector<uchar>& data, vector<int>& outputData) {
 	// Clear previous data
-	dataBitStr.clear();
-	dataSizesBitStr.clear();
-	compressedBytes.clear();
+	this->dataBitStr.clear();
+	this->compressedData.clear();
+	this->compressedDataSizes.clear();
 
 	// Concatenate data
 	for (int i = 0; i < data.size(); ++i) {
-		dataBitStr += toBinary(data[i]);
+		dataBitStr += byteToBinaryString(data[i]);
 	}
+
+	// 
+	data.swap(this->compressedData);
 
 	decodeDataSizes();
 	decodeBitString(outputData);
 }
 
 void BitConcatenator::decodeBitString(vector<int>& outputData) {
-	int i = 0;
-
-	while (!dataSizes.empty()) {
-		int size = dataSizes.top();
-		int data = toDecimal(dataBitStr.substr(i, size));
+	for (int i = 0, l = 0; i < compressedDataSizes.size(); ++i) {
+		int dataSize = compressedDataSizes[i];
+		int data = toDecimal(dataBitStr.substr(l, dataSize));
+		l += dataSize;
 		outputData.push_back(data);
-		dataSizes.pop();
-		i += size;
 	}
 }
 
 void BitConcatenator::decodeDataSizes() {
-	int n = dataBitStr.size();
-	int dataBitsCount = 0;
+	int bitsCount = 0;
 
-	while (n > dataBitsCount) {
-		int size = toDecimal(dataBitStr.substr(n - 5));
-		dataBitsCount += size;
-		dataSizes.push(size);
-		dataBitStr.erase(n -= 5, n);
+	while (compressedData.size() > (bitsCount + 7) >> 3) {
+		uchar data = compressedData.back();
+		compressedData.pop_back();
+
+		int cnt = (data & 63);
+		int len = blockLengths[(data >> 6)];
+		bitsCount += cnt * len;
+
+		for (int i = 0; i < cnt; ++i) {
+			compressedDataSizes.push_back(len);
+		}
+	}
+
+	if (compressedData.size() != (bitsCount + 7) >> 3) {
+		throw exception("Could not extract the given file");
 	}
 }
 
@@ -141,4 +157,12 @@ int BitConcatenator::toDecimal(string& binary) {
 	}
 
 	return num;
+}
+
+string BitConcatenator::byteToBinaryString(uchar byte) {
+	string result;
+	for (int i = 7; i >= 0; --i) {
+		result += '0' + (bool)(byte & (1 << i));
+	}
+	return result;
 }

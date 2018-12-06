@@ -11,13 +11,12 @@ typedef unsigned char uchar;
 class BitConcatenator
 {
 private:
+	int blockLengthsCount = 4;
+	int blockLengths[4] = { 4, 8, 12, 32 };
+
 	string dataBitStr;
-	string dataSizesBitStr;
-
-	vector<uchar> dataSizesLengths;
-
-	vector<uchar> compressedBytes;
-	stack<int> dataSizes;
+	vector<uchar> compressedData;
+	vector<int> compressedDataSizes;
 
 	// ==============================================================================
 	//
@@ -31,14 +30,14 @@ private:
 
 	void encodeBinary(int number);
 
-	void encodeMetaData();
+	void encodeDataSizes();
 
 	// ==============================================================================
 	//
 	// Deconcatenation functions
 	//
 public:
-	void deconcatenate(const vector<uchar>& data, vector<int>& outputData);
+	void deconcatenate(vector<uchar>& data, vector<int>& outputData);
 
 private:
 	void decodeBitString(vector<int>& outputData);
@@ -53,4 +52,6 @@ private:
 	string toBinary(int number);
 
 	int toDecimal(string& binary);
+
+	string byteToBinaryString(uchar byte);
 };
