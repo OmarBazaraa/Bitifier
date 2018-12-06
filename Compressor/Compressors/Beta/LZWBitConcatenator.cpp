@@ -58,7 +58,7 @@ void LZWBitConcatenator::decodeBitString(vector<int>& outputData) {
 	int l = 0;
 
 	while (l + 14 <= dataBitStr.size()) {
-		string& binary = dataBitStr.substr(l, 14);
+		string binary = dataBitStr.substr(l, 14);
 		l += 14;
 		outputData.push_back(toDecimal(binary));
 	}

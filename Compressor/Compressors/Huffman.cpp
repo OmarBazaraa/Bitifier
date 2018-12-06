@@ -87,7 +87,8 @@ void Huffman::encodeSymbols(vector<uchar>& encodedData) {
 
 	if (n >= 1 << 16) {
 		// Should never happens in "int" limit
-		throw exception("Cannot encode Huffman meta-data");
+		// throw exception("Cannot encode Huffman meta-data");
+		cerr << "Cannot encode Huffman meta-data" << endl;
 	}
 
 	encodedData.push_back(n);

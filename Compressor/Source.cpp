@@ -5,15 +5,15 @@
 #include <iomanip>
 
 // Custom libraries
-#include "Utilities\Directory.h"
-#include "Utilities\Utility.h"
-#include "Compressors\Compressor.h"
+#include "Utilities/Directory.h"
+#include "Utilities/Utility.h"
+#include "Compressors/Compressor.h"
 using namespace std;
 
 // Pathes
-#define PATH_SAMPLE_DATA        "Data\\Raw\\"
-#define PATH_COMPRESSED_DATA    "Data\\Compressed\\"
-#define PATH_UNCOMPRESSED_DATA  "Data\\Uncompressed\\"
+#define PATH_SAMPLE_DATA        "../Compressor/Data/Raw/"
+#define PATH_COMPRESSED_DATA    "../Compressor/Data/Compressed/"
+#define PATH_UNCOMPRESSED_DATA  "../Compressor/Data/Uncompressed/"
 #define EXT_SAMPLE_FILE         "jpg"
 #define EXT_COMPRESSED_FILE     "bit"
 

@@ -259,3 +259,9 @@ ModelManifest.xml
 
 # MAC specific files
 .DS_Store
+
+# Clion specific files
+.idea/*
+cmake-build-debug/*
+cmake-build-release/*
+CMakeLists.txt
